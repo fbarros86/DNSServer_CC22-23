@@ -1,1 +1,3 @@
-# DNSServer_CC22-23
+# DNS Server
+
+Implementation of a DNS server
