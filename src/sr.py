@@ -1,3 +1,7 @@
-def initializeSR(domains,stList,logs):
-    #ficar à espera de pedidos
-    pass
+from src.parseServer import Server
+
+
+class SRServer:
+    def __init__(self, domains, stList, logs):
+        # ficar à espera de pedidos
+        pass
