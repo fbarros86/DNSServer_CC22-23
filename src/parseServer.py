@@ -9,7 +9,7 @@ class Server:
     def __init__(self, domain, server_type=None):
         parameters = []
         # ler ficheiro e dividir linhas
-        with open(f".conf.{domain}", "r") as f:
+        with open(domain, "r") as f:
             for line in f.readlines():
                 if not (line[0] == "\n" or line == "#"):
                     words = line.split()
