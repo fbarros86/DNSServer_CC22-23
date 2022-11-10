@@ -5,6 +5,23 @@ class InvalidConfig(Exception):
     pass
 
 
+def verifyType(s_type):
+    r = None
+    if s_type == "DB":
+        r = "SP"
+    elif s_type == "SP":
+        r = "SS"
+    elif s_type == "SS":
+        r = "SP"
+    elif s_type == "DD":
+        r = "all"
+    elif s_type == "ST":
+        r = "all"
+    elif s_type == "LG":
+        r = "all"
+    return r
+
+
 class Server:
     def __init__(self, domain, server_type=None):
         parameters = []
@@ -15,10 +32,8 @@ class Server:
                     words = line.split()
                     parameters.append(words)
         transfSS = []  # lista para SS que podem pedir informação da bd
-        domains = (
-            []
-        )  # domínios para os quais o servidor responde ou encaminha para outro servidor
-        logs = []  # ficheiros de logs para registar a atividade
+        domains = [] # dd
+        logs = {} # ficheiros de logs para registar a atividade
         for p, t, v in parameters:
             s_type = self.verifyType(t)
             if not s_type:
@@ -41,27 +56,13 @@ class Server:
                     raise InvalidConfig("ST parameter invalid")
                 stList = v
             elif s_type == "LG":
-                logs.append((v, p))
+                logs[p]=v
+        
+        if "all" not in logs: raise InvalidConfig("Missing log file by default")
         if not server_type:
             sr.SRServer(domains, stList, logs)
         elif server_type == "SP":
             sp.SPServer(db, transfSS, domains, stList, logs)
         else:
             ss.SSServer(spIP, domains, stList, logs)
-
-    @staticmethod
-    def verifyType(s_type):
-        r = None
-        if s_type == "DB":
-            r = "SP"
-        elif s_type == "SP":
-            r = "SS"
-        elif s_type == "SS":
-            r = "SP"
-        elif s_type == "DD":
-            r = "all"
-        elif s_type == "ST":
-            r = "all"
-        elif s_type == "LG":
-            r = "all"
-        return r
+    
