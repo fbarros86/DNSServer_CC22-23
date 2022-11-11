@@ -1,4 +1,7 @@
+import os
+
 from src import sr, ss, sp
+from src.logs import Logs
 
 
 class InvalidConfig(Exception):
@@ -56,13 +59,15 @@ class Server:
                     raise InvalidConfig("ST parameter invalid")
                 stList = v
             elif s_type == "LG":
-                logs[p]=v
-        
+                logs[p]=Logs(v)
+                if not os.path.exists():
+                    f = open(p,"w")
+                    f.close()
         if "all" not in logs: raise InvalidConfig("Missing log file by default")
         if not server_type:
-            sr.SRServer(domains, stList, logs)
+            sr.SRServer(domain,domains, stList, logs)
         elif server_type == "SP":
-            sp.SPServer(db, transfSS, domains, stList, logs)
+            sp.SPServer(domain,db,transfSS, domains, stList, logs)
         else:
-            ss.SSServer(spIP, domains, stList, logs)
+            ss.SSServer(domain,spIP,domains, stList, logs)
     

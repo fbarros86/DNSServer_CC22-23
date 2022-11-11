@@ -3,8 +3,9 @@ from src.cache import Cache
 
 
 class SRServer:
-    def __init__(self, domains, stList, logs):
+    def __init__(self, domain,domains, stList, logs):
         self.cache=Cache()
+        self.domain=domain
         self.domains = domains #adicionar à cache
         self.sts = stList
         self.logs = logs

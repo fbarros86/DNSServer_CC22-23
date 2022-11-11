@@ -3,8 +3,9 @@ from src.cache import Cache
 
 
 class SSServer:
-    def __init__(self,spIP, domains, stList, logs):
+    def __init__(self,domain,spIP, domains, stList, logs):
         self.cache=Cache()
+        self.domain = domain
         self.sp = spIP
         self.domains = domains
         self.sts = stList
