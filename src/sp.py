@@ -1,5 +1,6 @@
 import socket
-from src.cache import Cache,entryOrigin,entryState
+from cache import Cache,entryOrigin,entryState
+from pdu import PDU
 
 
 # podia estar bem melhor, mas é o que é
@@ -36,7 +37,7 @@ class SPServer:
         self.domains = domains
         self.sts = stList
         self.logs = logs
-        self.startServer()
+        self.startServerUDP()
 
 
     def readDB(self,):
@@ -67,12 +68,24 @@ class SPServer:
                     self.cache.addEntry(p,s_type,value,ttl,order,entryOrigin.FILE)
 
     
-    def startServer():
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((socket.gethostname(), 1234))
-        s.listen()
+    def startServerUDP():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind(socket.gethostname(), 1234)
+        print(f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{1234}")
         while True:
-            clientSock, address = s.accept()
+            msg, clientAddress = s.recvfrom(1024)
+            #abrir thread e processar pedido
+            pdu = PDU(msg.decode('utf-8'))
+            print(pdu)
+            
 
-                        
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.bind((socket.gethostname(), 1234))
+print(f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{1234}")
+while True:
+    msg, clientAddress = s.recvfrom(1024)
+    print(clientAddress)
+    #abrir thread e processar pedido
+    pdu = PDU(udp=msg.decode('utf-8'))
+
 
