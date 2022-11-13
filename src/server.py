@@ -1,0 +1,114 @@
+import os
+import socket
+import sr, ss, sp
+from logs import Logs
+from pdu import PDU
+
+
+class InvalidConfig(Exception):
+    pass
+
+
+def verifyType(s_type):
+    r = None
+    if s_type == "DB":
+        r = "SP"
+    elif s_type == "SP":
+        r = "SS"
+    elif s_type == "SS":
+        r = "SP"
+    elif s_type == "DD":
+        r = "all"
+    elif s_type == "ST":
+        r = "all"
+    elif s_type == "LG":
+        r = "all"
+    return r
+
+
+class Server:
+    def __init__(self, domain, server_type=None):
+        parameters = []
+        # ler ficheiro e dividir linhas
+        with open(domain, "r") as f:
+            for line in f.readlines():
+                if not (line[0] == "\n" or line == "#"):
+                    words = line.split()
+                    parameters.append(words)
+        transfSS = []  # lista para SS que podem pedir informação da bd
+        domains = []  # dd
+        logs = {}  # ficheiros de logs para registar a atividade
+        for p, t, v in parameters:
+            s_type = self.verifyType(t)
+            if not s_type:
+                raise InvalidConfig("Invalid type of value")
+            if s_type != "all":
+                if not server_type:
+                    server_type = s_type
+                elif server_type != s_type:
+                    raise InvalidConfig("Confliting types of server")
+            if s_type == "DB":
+                db = v  # é suposto verificar o parâmetro, que o domínio é igual???
+            elif s_type == "SP":
+                spIP = (v, p)
+            elif s_type == "SS":
+                transfSS.append(v)  # é suposto guardar o domínio??
+            elif s_type == "DD":
+                domains.append((v, p))
+            elif s_type == "ST":
+                if p != "all":
+                    raise InvalidConfig("ST parameter invalid")
+                stList = v
+            elif s_type == "LG":
+                logs[p] = Logs(v)
+                if not os.path.exists():
+                    f = open(p, "w")
+                    f.close()
+        if "all" not in logs:
+            raise InvalidConfig("Missing log file by default")
+        if not server_type:
+            sr.SRServer(domain, domains, stList, logs)
+        elif server_type == "SP":
+            sp.SPServer(domain, db, transfSS, domains, stList, logs)
+        else:
+            ss.SSServer(domain, spIP, domains, stList, logs)
+
+    def startServerUDP(self, port=None):
+        # abrir socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if not port:
+            port = 1234
+        s.bind(socket.gethostname(), port)
+        print(f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{port}")
+
+        # receber queries
+        while True:
+            msg, a = s.recvfrom(1024)
+            print(f"Message from {a}:")
+            print("msg")
+
+            # guardar dados do cliente e mensagem
+
+            # abrir thread e fazer o que está a seguir dentro da thread
+            # processar pedido
+            pdu = PDU(msg.decode("utf-8"))  # se não está completo esperar
+
+            # resposta à query
+            pdu.rvalues = self.cache.getAllEntries(pdu, pdu.name, pdu.tov)
+            # se tiver alguma coisa na cache
+            if pdu.rvalues != []:
+                pdu.nvalues = len(pdu.rvalues)
+                pdu.auth = self.cache.getAllEntries(pdu, pdu.name, "NS")
+                pdu.nauth = len(pdu.auth)
+                # para cada servidor - PARA JÁ ESTÁ MAL
+                pdu.extra = self.cache.getAllEntries(pdu, pdu.name, "A")
+                pdu.nextra = len(pdu.extra)
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            else:
+                # ver para onde é para enviar para chegar a resultado da query
+
+                # enviar para traz ou para próximo servidor
+                if not self.flagR:
+                    pass
+                else:
+                    pass
