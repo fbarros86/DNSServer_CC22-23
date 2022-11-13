@@ -48,11 +48,11 @@ class PDU:
         header = f"{self.id},{self.flag},{self.response},{self.nvalues},{self.nauth},{self.nextra};"
         data = f"{self.name},{self.tov}\n"
         for r in self.rvalues:
-            data += r + "\n"
+            data += str(r) + "\n"
         for r in self.auth:
-            data += r + "\n"
+            data += str(r) + "\n"
         for r in self.extra:
-            data += r + "\n"
+            data += str(r) + "\n"
         return header + data[:-1]
 
     def parseFlags(self):

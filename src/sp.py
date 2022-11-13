@@ -1,6 +1,4 @@
-import socket
-from cache import Cache, entryOrigin, entryState
-from pdu import PDU
+from cache import Cache, entryOrigin
 from server import Server
 
 
@@ -28,14 +26,10 @@ def decodeEmail(email):
 
 class SPServer(Server):
     def __init__(self, domain, db, transfSS, domains, stList, logs):
-        self.cache = Cache()
+        super().__init__(domain, domains, stList, logs,"SP")
         self.db = db
-        self.domain = domain
         self.readDB()
         self.transfSS = transfSS
-        self.domains = domains
-        self.sts = stList
-        self.logs = logs
         self.startServerUDP()
 
     def readDB(
@@ -45,7 +39,7 @@ class SPServer(Server):
         # ler ficheiro e dividir linhas
         with open(self.db, "r") as f:
             for line in f.readlines():
-                if not (line[0] == "\n" or line == "#"):
+                if not (line[0] == "\n" or line[0] == "#"):
                     words = line.split()
                     parameters.append(words)
 
@@ -65,7 +59,8 @@ class SPServer(Server):
             # descodificar segundo macros
             if s_type == "DEFAULT":
                 pass  # não é obrigatório -> para implementar dps - é só substituir
-            elif p.endswith(self.domain):
+           # elif p.endswith(self.domain):
+            else:
                 if s_type == "SOAADMIN":
                     self.cache.addEntry(
                         p, s_type, decodeEmail(value), ttl, order, entryOrigin.FILE

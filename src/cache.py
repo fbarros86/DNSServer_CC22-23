@@ -15,19 +15,18 @@ class entryOrigin(Enum):
 
 class CacheEntry:
     def __init__(self, index):
-        self.state(entryState.FREE)
+        self.status = entryState.FREE
         self.index = index
+        self.name = None
+        self.type = None
+        self.value = None
+        self.ttl = None
+        self.order = None
+        self.origin = None
+        self.timestamp = None
 
-    def __init__(self, name, type, value, ttl, order, origin, timestamp, index, status):
-        self.name = name
-        self.type = type
-        self.value = value
-        self.ttl = ttl
-        self.order = order
-        self.origin = origin
-        self.timestamp = timestamp
-        self.index = index
-        self.status = status
+    def __repr__(self):
+        return f"{self.status},{self.index},{self.name},{self.type},{self.value},{self.ttl},{self.order},{self.origin},{self.timestamp };"
 
 
 class Cache:
@@ -36,6 +35,9 @@ class Cache:
         self.N = 1
         self.validEntries = 0
         self.freeEntries = [0]
+
+    def __repr__(self) -> str:
+        return str(self.entries)
 
     def getEntry(self, index, name, type):
         for i in range(index, self.N):
@@ -61,7 +63,7 @@ class Cache:
                 entries.append(self.entries[v])
                 i = v + 1
             else:
-                v = -1
+                i = -1
         return entries
 
     def hasEntry(self, name, type, value, order):

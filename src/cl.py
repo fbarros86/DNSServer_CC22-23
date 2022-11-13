@@ -15,10 +15,15 @@ class Client:
         s.sendto(str(datagram).encode("utf-8"), (ip, int(port)))
 
         # receber resposta
-        s.bind(socket.gethostname(), port)
         msg, a = s.recvfrom(1024)
-
-        # verificar se é a resposta ou é preciso reenviar a outro servidor
+        m = msg.decode("utf-8")
+        print(f"Received a packet from {a}:\n{m}")
+        """rsp = PDU(udp=msg.decode("utf-8"))
+        # se tiver que se reencaminhar
+        if rsp.nvalues == 0:
+            if PDU.flagR:
+                PDU.flagR = False
+            # enviar para o servidor que diz na query"""
 
 
 Client(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
