@@ -26,7 +26,7 @@ class CacheEntry:
         self.timestamp = None
 
     def __repr__(self):
-        return f"{self.status},{self.index},{self.name},{self.type},{self.value},{self.ttl},{self.order},{self.origin},{self.timestamp };"
+        return f"{self.status},{self.index},{self.name},{self.type},{self.value},{self.ttl},{self.order},{self.origin},{self.timestamp};"
 
 
 class Cache:
@@ -49,8 +49,7 @@ class Cache:
                     entry.status = entryState.FREE
                     self.freeEntries.append(entry.index)
                     self.freeEntries.sort()
-                elif entry.index >= index:
-                    if entry.name == name and entry.type == type:
+                elif entry.name == name and entry.type == type:
                         return entry.index
         return None
 
