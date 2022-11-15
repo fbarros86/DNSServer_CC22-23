@@ -9,7 +9,7 @@ class PDU:
             data = datagram[1].split("\n")
             self.id = int(header[0])
             self.flag = header[1]
-            self.parseFlags
+            self.parseFlags()
             self.response = int(header[2])
             self.nvalues = int(header[3])
             self.nauth = int(header[4])
