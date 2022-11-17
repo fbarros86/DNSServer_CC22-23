@@ -1,8 +1,12 @@
 from cache import Cache
-from server import Server
 
 
-class SRServer(Server):
+class SRServer:
     def __init__(self, domains, stList, logs):
-        super().__init__( domains, stList, logs,"SR")
-        self.startServerUDP()
+        self.cache = Cache()
+        self.domains = domains #adicionar à cache
+        self.sts = stList
+        self.logs = logs
+        #self.startServerUDP()
+    
+    

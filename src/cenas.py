@@ -5,6 +5,27 @@ def getIPandPort(ipServer):
     else:
         return l[0], None
     
+# podia estar bem melhor, mas é o que é
+def decodeEmail(email):
+    new_email = ""
+    size = 0
+    beggining = True
+    for i in range(len(email)):
+        if email[i] != ".":
+            new_email += email[i]
+            size += 1
+        elif new_email[size - 1] == "\\":
+            new_email = new_email[:-1]
+            new_email += "."
+        elif beggining:
+            new_email += "@"
+            size += 1
+            beggining = False
+        else:
+            new_email += email[i]
+            size += 1
+    return new_email
+    
 '''
     
 #servidor
