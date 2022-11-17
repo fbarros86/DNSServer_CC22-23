@@ -1,5 +1,7 @@
-from cache import Cache, entryOrigin
+from cache import entryOrigin
 from server import Server
+
+
 
 
 # podia estar bem melhor, mas é o que é
@@ -25,11 +27,11 @@ def decodeEmail(email):
 
 
 class SPServer(Server):
-    def __init__(self, domain, db, transfSS, domains, stList, logs):
-        super().__init__(domain, domains, stList, logs,"SP")
+    def __init__(self, db, transfSS, domains, stList, logs):
         self.db = db
         self.readDB()
         self.transfSS = transfSS
+        super().__init__(domains, stList, logs,"SP",transfSS)
         self.startServerUDP()
 
     def readDB(

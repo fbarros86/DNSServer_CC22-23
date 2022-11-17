@@ -1,9 +1,15 @@
-from cache import Cache
 from server import Server
+from cenas import getIPandPort
+
 
 
 class SSServer(Server):
-    def __init__(self, domain, spIP, domains, stList, logs):
-        super().__init__(domain, domains, stList, logs,"SS")
-        self.sp = spIP
+    
+    def getDB(self):
+        pass
+        
+    
+    def __init__(self, spIP, domains, stList, logs):
+        self.spIP, self.spPort = getIPandPort(spIP)
+        super().__init__(domains, stList, logs,"SS",[self.spIP,self.spPort,-1])
         self.startServerUDP()

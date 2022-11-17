@@ -26,7 +26,7 @@ def verifyType(s_type):
 
 
 class InitServer:
-    def __init__(self, domain, confFile, server_type=None):
+    def __init__(self, confFile, server_type=None):
         parameters = []
         # ler ficheiro e dividir linhas
         with open(confFile, "r") as f:
@@ -66,11 +66,11 @@ class InitServer:
         if "all" not in logs:
             raise InvalidConfig("Missing log file by default")
         if not server_type:
-            sr.SRServer(domain, domains, stList, logs)
+            sr.SRServer(domains, stList, logs)
         elif server_type == "SP":
-            sp.SPServer(domain, db, transfSS, domains, stList, logs)
+            sp.SPServer(db, transfSS, domains, stList, logs)
         else:
-            ss.SSServer(domain, spIP, domains, stList, logs)
+            ss.SSServer(spIP, domains, stList, logs)
 
 
-InitServer(sys.argv[1], sys.argv[2])
+InitServer(sys.argv[1])

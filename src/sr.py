@@ -3,6 +3,6 @@ from server import Server
 
 
 class SRServer(Server):
-    def __init__(self, domain, domains, stList, logs):
-        super().__init__(domain, domains, stList, logs,"SR")
+    def __init__(self, domains, stList, logs):
+        super().__init__( domains, stList, logs,"SR")
         self.startServerUDP()
