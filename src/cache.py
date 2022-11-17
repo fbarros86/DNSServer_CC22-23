@@ -82,6 +82,21 @@ class Cache:
                 ):
                     return entry
         return None
+    
+    def getEntryTypeValue(self,type):
+        for entry in self.entries:
+            if entry.status == entryState.VALID:
+                if entry.origin == entryOrigin.OTHERS and (
+                    time.time() - entry.timestamp > entry.ttl
+                ):
+                    entry.status = entryState.FREE
+                    self.freeEntries.append(entry.index)
+                    self.freeEntries.sort()
+                elif entry.type == type:
+                        return entry.value
+        return None
+        
+        
 
     def duplicateCache(self):
         oldN = self.N

@@ -81,8 +81,11 @@ class SPServer:
             )  # se não está completo esperar ou arranjar estratégia melhor
             print(pdu)
             if (pdu.tov=="SSDB"):
-                    if (pdu.name in self.others): #verificar se o servidor que mandou tem permissões
-                        pdu = PDU(name=str(self.nlinhas),typeofvalue="DBL")
+                    if (pdu.name in self.transfSS): #verificar se o servidor que mandou tem permissões
+                        pdu = PDU(name=str(self.nlinhas).encode("utf-8"),typeofvalue="DBL")
+            elif (pdu.tov=="DBV"):
+                version = self.cache.getEntryTypeValue("SOASERIAL")
+                pdu = PDU(name=str(version).encode("utf-8"),typeofvalue="DBV")
             elif (pdu.tov=="LDB"):
                 if (self.nlinhas==pdu.name):
                     self.sendDBLines()    

@@ -1,11 +1,24 @@
 from cenas import getIPandPort
 import socket
+import time
 from pdu import PDU
 from cache import Cache,entryOrigin
 from cenas import decodeEmail
 
 
 class SSServer:
+    
+    def __init__(self, spIP, domains, stList, logs):
+        self.spIP, self.spPort = getIPandPort(spIP)
+        self.cache = Cache()
+        self.domains = domains #adicionar à cache
+        self.sts = stList
+        self.logs = logs
+        self.dbv = -1
+        self.dbtime = -1
+        self.texpire = -1
+        self.updateDB()
+        self.startUDPSS()
     
     def parseDBLine(self,msg:str,i):
         parameter = msg.split()
@@ -30,15 +43,18 @@ class SSServer:
             self.cache.addEntry(p, s_type, value, ttl, order, entryOrigin.SP)
         return True      
     
-    def atualizaDB(self,sUDP):
+    def verifyVersion(self):
+        pass
+    
+    def updateDB(self,sUDP:socket.socket):
         # ver a versão --> para dps
         msg = str(PDU(name="enderecodele????",typeofvalue="SSDB"))
         sUDP.send(msg.encode('utf-8'))
         msg, a = sUDP.recv(1024)
-        nLinhas = int(msg.encode('utf-8'))
+        nLinhas = int(msg.decode('utf-8'))
         sUDP.send(msg)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.others[0], self.others[1]))
+        s.connect((self.spIP,self.spPort))
         line = s.makefile()
         for i in range(0,nLinhas):
             msg = line.readline()
@@ -49,15 +65,9 @@ class SSServer:
         s.close()
         
     
-    def __init__(self, spIP, domains, stList, logs):
-        self.spIP, self.spPort = getIPandPort(spIP)
-        self.cache = Cache()
-        self.domains = domains #adicionar à cache
-        self.sts = stList
-        self.logs = logs
-        self.startUDPSS()
+
     
-    def startServerUDP(self, port=None):
+    def startUDPSS(self, port=None):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if not port:
@@ -67,27 +77,17 @@ class SSServer:
 
         # receber queries
         while True:
-            if (self.sType=="SS"):
-                if (self.others[2]==-1 ): #e verificar se é preciso fazer refresh
-                    self.atualizaDB(s)
+            if (time.time()- self.dbtime > self.texpire): #e verificar se é preciso fazer refresh
+                if (self.verifyVersion()):
+                    self.updateDB(s)
             msg, a = s.recvfrom(1024)
             print(f"Received a packet from {a}:")
-            # guardar dados do cliente e mensagem quando introduzir paralelismo
-
-            # abrir thread
 
             # processar pedido
             pdu = PDU(
                 msg.decode("utf-8")
             )  # se não está completo esperar ou arranjar estratégia melhor
-            print(pdu)
-            if (pdu.tov=="SSDB"):
-                if (self.sType == "SP"):
-                    if (pdu.name in self.others):#verificar se o servidor que mandou tem permissões
-                        pdu = PDU(name=str(self.getnlinhas()),typeofvalue="DBL")
-            elif (pdu.tov=="LDB"):
-                if (self.sType == "SP" and self.getnlinhas()==pdu.name):
-                    self.sendDBLines()    
+            print(pdu)  
             # resposta à query
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             pdu.nvalues = len(pdu.rvalues)
