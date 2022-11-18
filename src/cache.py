@@ -26,7 +26,7 @@ class CacheEntry:
         self.timestamp = None
 
     def __repr__(self):
-        return f"{self.status},{self.index},{self.name},{self.type},{self.value},{self.ttl},{self.order},{self.origin},{self.timestamp};"
+        return f"{self.name},{self.type},{self.value}"
 
 
 class Cache:
@@ -37,7 +37,11 @@ class Cache:
         self.freeEntries = [0]
 
     def __repr__(self) -> str:
-        return str(self.entries)
+        r = ""
+        for entry in self.entries:
+            if (entry.status==entryState.VALID):
+                r=r +str(entry)+ "\n"
+        return r
 
     def getEntry(self, index, name, type):
         for i in range(index, self.N):

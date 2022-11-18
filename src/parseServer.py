@@ -47,11 +47,11 @@ class InitServer:
                 elif server_type != s_type:
                     raise InvalidConfig("Confliting types of server")
             if t == "DB":
-                db = v  # é suposto verificar o parâmetro, que o domínio é igual???
+                db = v
             elif t == "SP":
                 spIP = (v, p)
             elif t == "SS":
-                transfSS.append(v)  # é suposto guardar o domínio??
+                transfSS.append(v)
             elif t == "DD":
                 domains.append((v, p))
             elif t == "ST":
