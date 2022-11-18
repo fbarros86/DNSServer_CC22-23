@@ -1,3 +1,5 @@
+from cache import Cache, entryOrigin
+
 def getIPandPort(ipServer):
     l = ipServer.split(":")
     if len(l) > 1:
@@ -27,50 +29,8 @@ def decodeEmail(email):
             size += 1
     return new_email
 
-
-"""
-    
-#servidor
-def processamento (connection, address):
-    while True:
-        msg = connection.recv(1024)
-
-        if not msg:
-            print("IJGWUGRHJG ODEIO REDES GJEWGUJWRGJWRUG")
-            break
-        
-        print(msg.decode('utf-8'))
-        print(f"Recebi uma ligação do cliente {address}")
-
-
-    connection.close()
-
-def main():    
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    endereco = '10.0.0.10'
-    porta = 3333
-    s.bind((endereco, porta ))
-    s.listen()
-    print(f"Estou à escuta no {endereco}:{porta}")
-
-
-
-#cliente
-    
-import socket
-import time
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-s.connect(('10.0.0.10', 3333))
-
-msg = "Adoro Redes :)"
-
-while True:
-    s.sendall(msg.encode('utf-8'))
-    time.sleep(1)
-    
-s.close()
-
-"""
+def addSTsToCache(c:Cache, STfile):
+    with open(STfile, "r") as f:
+        for line in f.readlines():
+            if not (line[0] == "\n" or line[0] == "#"):
+                c.addEntry(name="ST",type="ST",value=line,origin=entryOrigin.FILE)

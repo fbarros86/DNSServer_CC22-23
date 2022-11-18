@@ -1,7 +1,9 @@
 import socket
+import time
 from pdu import PDU
 from cache import Cache, entryOrigin
-from cenas import decodeEmail
+from cenas import decodeEmail,addSTsToCache
+from logs import Logs
 
 
 class SPServer:
@@ -10,8 +12,8 @@ class SPServer:
         self.db = db
         self.nlinhas = self.readDB()
         self.transfSS = transfSS
-        self.domains = domains  # adicionar à cache
-        self.sts = stList
+        self.domains = domains
+        addSTsToCache(self.cache,stList)
         self.logs = logs
         self.starUDPSP()
 
@@ -44,7 +46,6 @@ class SPServer:
             # descodificar segundo macros
             if s_type == "DEFAULT":
                 pass  # não é obrigatório -> para implementar dps - é só substituir
-            # elif p.endswith(self.domain):
             else:
                 if s_type == "SOAADMIN":
                     self.cache.addEntry(
@@ -57,22 +58,29 @@ class SPServer:
     def sendDBLines(self, ip, port):
         i = 0
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        time.sleep(1)#esperar que abra -> está mal
         s.connect((ip, port))
-
         with open(self.db, "r") as f:
             for line in f.readlines():
                 if not (line[0] == "\n" or line[0] == "#"):
                     msg = str(i) + " " + line
                     s.sendall(msg.encode("utf-8"))
                     i += 1
-        print("Done sending DB lines\n")
         s.close()
 
     def hasTransferPermissions(self, a):
         return True
         return a in self.transfSS  # ver melhor isto
 
+    def verifiyDomain(self,d):
+        r = False
+        for ip,domain in self.domains:
+            if d==domain:
+                r=True
+                break
+        return r
+            
+    
     def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -80,37 +88,38 @@ class SPServer:
             port = 1234
         s.bind((socket.gethostname(), port))
         print(
-            f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{port}\n"
+            f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
         )
 
         # receber queries
         while True:
             msg, a = s.recvfrom(1024)
-            print(f"Received a packet from {a}:")
 
             # processar pedido
             pdu = PDU(
                 msg.decode("utf-8")
             )  # se não está completo esperar ou arranjar estratégia melhor
-            print(pdu)
-            print("\n")
+            l:Logs
+            if (pdu.name in self.logs): l= self.logs[pdu.name]
+            else: l= self.logs["all"]
+            l.addEntry(time.time(),"QR",a,pdu)
             if pdu.tov == "DBV":
                 version = self.cache.getEntryTypeValue("SOASERIAL")
                 pdu.name = str(version)
-                print("Going to send:")
-                print(pdu)
-                print("\n")
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"RP",a,pdu)
             elif pdu.tov == "SSDB":
                 if self.hasTransferPermissions(a):  # verificar name
-                    pdu.name = str(version)
+                    pdu.name = str(self.nlinhas)
                     pdu.tov = "DBL"
                     s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                    l.addEntry(time.time(),"RP",a,pdu)
             elif pdu.tov == "DBL":
-                if self.nlinhas == pdu.name:
-                    self.sendDBLines(port=port)
+                if self.nlinhas == int(pdu.name):
+                    self.sendDBLines(a[0],int(a[1]))
+                    l.addEntry(time.time(),"ZT",a,"SP")
             # resposta à query
-            else:
+            elif (self.verifiyDomain(pdu.name)): #isto deve estar mal
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
                 pdu.nvalues = len(pdu.rvalues)
                 pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
@@ -123,7 +132,8 @@ class SPServer:
                 for v in pdu.auth:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
-                print("Going to send:")
-                print(pdu)
-                print("\n")
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"RP",a,pdu)
+
+
+# python3 parseServer.py ../testFiles/configtest.txt

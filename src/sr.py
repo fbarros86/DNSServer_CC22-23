@@ -1,10 +1,11 @@
 from cache import Cache
+from cenas import addSTsToCache
 
 
 class SRServer:
     def __init__(self, domains, stList, logs):
         self.cache = Cache()
         self.domains = domains  # adicionar à cache
-        self.sts = stList
+        addSTsToCache(self.cache,stList)
         self.logs = logs
         # self.startServerUDP()
