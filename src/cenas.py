@@ -4,7 +4,8 @@ def getIPandPort(ipServer):
         return l[0], l[1]
     else:
         return l[0], None
-    
+
+
 # podia estar bem melhor, mas é o que é
 def decodeEmail(email):
     new_email = ""
@@ -25,8 +26,9 @@ def decodeEmail(email):
             new_email += email[i]
             size += 1
     return new_email
-    
-'''
+
+
+"""
     
 #servidor
 def processamento (connection, address):
@@ -71,4 +73,4 @@ while True:
     
 s.close()
 
-'''
+"""

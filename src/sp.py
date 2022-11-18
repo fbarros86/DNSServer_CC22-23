@@ -1,19 +1,16 @@
 import socket
 from pdu import PDU
-from cache import Cache,entryOrigin
+from cache import Cache, entryOrigin
 from cenas import decodeEmail
-
-
-
 
 
 class SPServer:
     def __init__(self, db, transfSS, domains, stList, logs):
+        self.cache = Cache()
         self.db = db
         self.nlinhas = self.readDB()
         self.transfSS = transfSS
-        self.cache = Cache()
-        self.domains = domains #adicionar à cache
+        self.domains = domains  # adicionar à cache
         self.sts = stList
         self.logs = logs
         self.starUDPSP()
@@ -29,7 +26,7 @@ class SPServer:
                 if not (line[0] == "\n" or line[0] == "#"):
                     words = line.split()
                     parameters.append(words)
-                    nlines+=1
+                    nlines += 1
 
         # adicionar à cache o conteúdo da base de dados
         for parameter in parameters:
@@ -47,7 +44,7 @@ class SPServer:
             # descodificar segundo macros
             if s_type == "DEFAULT":
                 pass  # não é obrigatório -> para implementar dps - é só substituir
-           # elif p.endswith(self.domain):
+            # elif p.endswith(self.domain):
             else:
                 if s_type == "SOAADMIN":
                     self.cache.addEntry(
@@ -56,19 +53,35 @@ class SPServer:
                 else:
                     self.cache.addEntry(p, s_type, value, ttl, order, entryOrigin.FILE)
         return nlines
-    
-    def sendDBLines(self):
-        pass
 
-    
-    
-    def starUDPSP(self, port=None):
+    def sendDBLines(self, ip, port):
+        i = 0
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        s.connect((ip, port))
+
+        with open(self.db, "r") as f:
+            for line in f.readlines():
+                if not (line[0] == "\n" or line[0] == "#"):
+                    msg = str(i) + " " + line
+                    s.sendall(msg.encode("utf-8"))
+                    i += 1
+        print("Done sending DB lines\n")
+        s.close()
+
+    def hasTransferPermissions(self, a):
+        return True
+        return a in self.transfSS  # ver melhor isto
+
+    def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if not port:
             port = 1234
         s.bind((socket.gethostname(), port))
-        print(f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{port}")
+        print(
+            f"Estou a  escuta no {socket.gethostbyname(socket.gethostname())}:{port}\n"
+        )
 
         # receber queries
         while True:
@@ -80,29 +93,37 @@ class SPServer:
                 msg.decode("utf-8")
             )  # se não está completo esperar ou arranjar estratégia melhor
             print(pdu)
-            if (pdu.tov=="SSDB"):
-                    if (pdu.name in self.transfSS): #verificar se o servidor que mandou tem permissões
-                        pdu = PDU(name=str(self.nlinhas).encode("utf-8"),typeofvalue="DBL")
-            elif (pdu.tov=="DBV"):
+            print("\n")
+            if pdu.tov == "DBV":
                 version = self.cache.getEntryTypeValue("SOASERIAL")
-                pdu = PDU(name=str(version).encode("utf-8"),typeofvalue="DBV")
-            elif (pdu.tov=="LDB"):
-                if (self.nlinhas==pdu.name):
-                    self.sendDBLines()    
+                pdu.name = str(version)
+                print("Going to send:")
+                print(pdu)
+                print("\n")
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            elif pdu.tov == "SSDB":
+                if self.hasTransferPermissions(a):  # verificar name
+                    pdu.name = str(version)
+                    pdu.tov = "DBL"
+                    s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            elif pdu.tov == "DBL":
+                if self.nlinhas == pdu.name:
+                    self.sendDBLines(port=port)
             # resposta à query
-            pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
-            pdu.nvalues = len(pdu.rvalues)
-            pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
-            pdu.nauth = len(pdu.auth)
-            # se tiver alguma coisa na cache
-            if pdu.nvalues==0 and pdu.nauth>0:
-                pdu.response=1
-            for v in pdu.rvalues:
-                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-            for v in pdu.auth:
-                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-            pdu.nextra = len(pdu.extra)
-            print("Going to send:")
-            print(pdu)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-            # ver para onde é para enviar se não tem a resposta
+            else:
+                pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
+                pdu.nvalues = len(pdu.rvalues)
+                pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
+                pdu.nauth = len(pdu.auth)
+                # se tiver alguma coisa na cache
+                if pdu.nvalues == 0 and pdu.nauth > 0:
+                    pdu.response = 1
+                for v in pdu.rvalues:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
+                print("Going to send:")
+                print(pdu)
+                print("\n")
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))

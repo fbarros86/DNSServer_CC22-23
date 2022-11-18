@@ -50,7 +50,7 @@ class Cache:
                     self.freeEntries.append(entry.index)
                     self.freeEntries.sort()
                 elif entry.name == name and entry.type == type:
-                        return entry.index
+                    return entry.index
         return None
 
     def getAllEntries(self, name, type):
@@ -82,8 +82,8 @@ class Cache:
                 ):
                     return entry
         return None
-    
-    def getEntryTypeValue(self,type):
+
+    def getEntryTypeValue(self, type):
         for entry in self.entries:
             if entry.status == entryState.VALID:
                 if entry.origin == entryOrigin.OTHERS and (
@@ -93,10 +93,8 @@ class Cache:
                     self.freeEntries.append(entry.index)
                     self.freeEntries.sort()
                 elif entry.type == type:
-                        return entry.value
+                    return entry.value
         return None
-        
-        
 
     def duplicateCache(self):
         oldN = self.N
