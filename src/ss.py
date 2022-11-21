@@ -8,7 +8,7 @@ from logs import Logs
 
 
 class SSServer:
-    def __init__(self, spIP, domains, stList, logs):
+    def __init__(self, spIP, domains, stList, logs,port, timeout):
         self.spDomain = spIP[1]
         self.spIP, self.spPort = getIPandPort(spIP[0])
         self.cache = Cache()
@@ -18,10 +18,11 @@ class SSServer:
         self.dbv = -1
         self.dbtime = -1
         self.texpire = -1
-        self.startUDPSS()
+        self.timeout = timeout
+        self.startUDPSS(port)
 
     def verifyVersion(self, s: socket.socket):
-        msg = (PDU(name="????", typeofvalue="DBV"))
+        msg = (PDU(name="DVB", typeofvalue="DBV"))
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
@@ -57,7 +58,7 @@ class SSServer:
         return True
 
     def updateDB(self, sUDP: socket.socket,port):
-        msg = PDU(name="192.168.1.76:3001", typeofvalue="SSDB")
+        msg = PDU(name="nomecompleto", typeofvalue="SSDB")
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
@@ -88,7 +89,7 @@ class SSServer:
         s.close()
         self.dbv = self.cache.getEntryTypeValue("SOASERIAL")
         self.dbtime = time.time()
-        self.texpire = self.cache.getEntryTypeValue("SOAREFRESH")
+        self.texpire = self.cache.getEntryTypeValue("SOAEXPIRE")
         print(self.cache)
     
     def verifiyDomain(self,d):
@@ -115,7 +116,7 @@ class SSServer:
             if (
                 self.dbv == -1 or time.time() - float(self.dbtime) > float(self.texpire)
             ):
-                if self.dbv == 1 or not self.verifyVersion(s):
+                if self.dbv == -1 or not self.verifyVersion(s):
                     self.updateDB(s,port)
                 else:
                     self.dbtime = time.time()

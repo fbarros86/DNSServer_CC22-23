@@ -26,7 +26,8 @@ def verifyType(s_type):
 
 
 class InitServer:
-    def __init__(self, confFile, server_type=None):
+    def __init__(self, confFile, port, timeout, mode=0):
+        server_type=None
         parameters = []
         # ler ficheiro e dividir linhas
         with open(confFile, "r") as f:
@@ -59,18 +60,19 @@ class InitServer:
                     raise InvalidConfig("ST parameter invalid")
                 stList = v
             elif t == "LG":
-                logs[p] = Logs(v)
+                logs[p] = Logs(v,mode)
                 if not os.path.exists(v):
                     f = open(v, "w")
                     f.close()
         if "all" not in logs:
             raise InvalidConfig("Missing log file by default")
         if not server_type:
-            sr.SRServer(domains, stList, logs)
+            sr.SRServer(domains, stList, logs,port, timeout)
         elif server_type == "SP":
-            sp.SPServer(db, transfSS, domains, stList, logs)
+            sp.SPServer(db, transfSS, domains, stList, logs,port, timeout)
         else:
-            ss.SSServer(spIP, domains, stList, logs)
+            ss.SSServer(spIP, domains, stList, logs,port, timeout,port, timeout)
 
 
-InitServer(sys.argv[1])
+InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
+# ficheiro de configuração, porta de atendimento, timeout

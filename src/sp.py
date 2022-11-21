@@ -7,7 +7,7 @@ from logs import Logs
 
 
 class SPServer:
-    def __init__(self, db, transfSS, domains, stList, logs):
+    def __init__(self, db, transfSS, domains, stList, logs,port, timeout):
         self.cache = Cache()
         self.db = db
         self.nlinhas = self.readDB()
@@ -15,8 +15,9 @@ class SPServer:
         self.domains = domains
         addSTsToCache(self.cache,stList)
         self.logs = logs
-        self.starUDPSP()
-
+        self.timeout = timeout
+        self.starUDPSP(port)
+        
     def readDB(
         self,
     ):
