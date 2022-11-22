@@ -9,16 +9,21 @@ from logs import Logs
 
 class SSServer:
     def __init__(self, spIP, domains, stList, logs,port, timeout):
+        self.logs = logs
+        l= self.logs["all"]
         self.spDomain = spIP[1]
         self.spIP, self.spPort = getIPandPort(spIP[0])
         self.cache = Cache()
         self.domains = domains
-        addSTsToCache(self.cache,stList)
-        self.logs = logs
+        try:
+            addSTsToCache(self.cache,stList)
+        except:
+            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
         self.dbv = -1
         self.dbtime = -1
         self.texpire = -1
         self.timeout = timeout
+        l.addEntry(time.time(),"SP","@","Debug")
         self.startUDPSS(port)
 
     def verifyVersion(self, s: socket.socket):
@@ -48,7 +53,6 @@ class SSServer:
             ttl = parameter[4]
         if l > 5:
             order = parameter[5]
-        # acrescentar aos logs e ao standard output no caso do modo debug
         if s_type == "SOAADMIN":
             self.cache.addEntry(
                 p, s_type, decodeEmail(value), ttl, order, entryOrigin.SP
@@ -75,7 +79,7 @@ class SSServer:
         l.addEntry(time.time(),"QE",f"{self.spIP}:{self.spPort}",rsp)
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((socket.gethostname(), port))
+        s.bind((socket.gethostname(), int(port)))
         s.listen()
         connection, address = s.accept()
         line = connection.makefile()
@@ -90,11 +94,10 @@ class SSServer:
         self.dbv = self.cache.getEntryTypeValue("SOASERIAL")
         self.dbtime = time.time()
         self.texpire = self.cache.getEntryTypeValue("SOAEXPIRE")
-        print(self.cache)
     
     def verifiyDomain(self,d):
         r = False
-        for ip,domain in self.domains:
+        for domain in self.domains:
             if d==domain:
                 r=True
                 break
@@ -103,9 +106,7 @@ class SSServer:
     def startUDPSS(self, port=3001):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        if not port:
-            port = 1234
-        s.bind((socket.gethostname(), port))
+        s.bind((socket.gethostname(), int(port)))
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}\n"
         )
@@ -121,14 +122,20 @@ class SSServer:
                 else:
                     self.dbtime = time.time()
             msg, a = s.recvfrom(1024)
-            pdu = PDU(
-                msg.decode("utf-8")
-            )  # se não está completo esperar ou arranjar estratégia melhor
+            try:
+                pdu = PDU(
+                    msg.decode("utf-8")
+                )
+            except:
+                pdu = PDU(error=3)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
             l.addEntry(time.time(),"QR",a,pdu)
-            if (self.verifiyDomain(pdu.name)):
+            if(pdu.response==3):
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"ER",a,"Erro a transformar String em PDU")
+            elif (self.verifiyDomain(pdu.name)):
                 # resposta à query
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
                 pdu.nvalues = len(pdu.rvalues)
@@ -144,7 +151,14 @@ class SSServer:
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
                 l.addEntry(time.time(),"RP",a,pdu)
-                # ver para onde é para enviar se não tem a resposta
             else:
-                pdu.response=3
+                pdu.response=2
+                pdu.auth = self.cache.getAllTypeEntries("NS")
+                pdu.nauth = len(pdu.auth)
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"RP",a,pdu)
+        l= self.logs["all"]
+        l.addEntry(time.time(),"SP","@","Paragem de SP")

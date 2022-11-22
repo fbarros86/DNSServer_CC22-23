@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import sr, ss, sp
 from logs import Logs
 
@@ -54,13 +55,14 @@ class InitServer:
             elif t == "SS":
                 transfSS.append(v)
             elif t == "DD":
-                domains.append((v, p))
+                domains.append(p)
             elif t == "ST":
                 if p != "root":
                     raise InvalidConfig("ST parameter invalid")
                 stList = v
             elif t == "LG":
                 logs[p] = Logs(v,mode)
+                logs[p].addEntry(time.time(),"EV","@","Ficheiro Logs Criado")
                 if not os.path.exists(v):
                     f = open(v, "w")
                     f.close()
@@ -71,7 +73,7 @@ class InitServer:
         elif server_type == "SP":
             sp.SPServer(db, transfSS, domains, stList, logs,port, timeout)
         else:
-            ss.SSServer(spIP, domains, stList, logs,port, timeout,port, timeout)
+            ss.SSServer(spIP, domains, stList, logs,port, timeout)
 
 
 InitServer(sys.argv[1],sys.argv[2],sys.argv[3])

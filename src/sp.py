@@ -8,14 +8,26 @@ from logs import Logs
 
 class SPServer:
     def __init__(self, db, transfSS, domains, stList, logs,port, timeout):
+        self.logs = logs
+        l:Logs
+        l= self.logs["all"]
+        l.addEntry(time.time(),"EV","@","Ficheiro de configuração lido")
         self.cache = Cache()
         self.db = db
-        self.nlinhas = self.readDB()
+        try:
+            self.nlinhas = self.readDB()
+        except:
+            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
+        l.addEntry(time.time(),"EV","@","Ficheiro de dados lido e armazenado em cache")
         self.transfSS = transfSS
         self.domains = domains
-        addSTsToCache(self.cache,stList)
-        self.logs = logs
+        try:
+            addSTsToCache(self.cache,stList)
+        except:
+            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
+        l.addEntry(time.time(),"EV","@","Ficheiro da lista dos STs lido e armazenado em cache")
         self.timeout = timeout
+        l.addEntry(time.time(),"SP","@","Debug")
         self.starUDPSP(port)
         
     def readDB(
@@ -43,7 +55,6 @@ class SPServer:
                 ttl = parameter[3]
             if l > 4:
                 order = parameter[4]
-            # acrescentar aos logs e ao standard output no caso do modo debug
             # descodificar segundo macros
             if s_type == "DEFAULT":
                 pass  # não é obrigatório -> para implementar dps - é só substituir
@@ -59,7 +70,7 @@ class SPServer:
     def sendDBLines(self, ip, port):
         i = 0
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        time.sleep(1)#esperar que abra -> está mal
+        time.sleep(1) #esperar que abra -> está mal
         s.connect((ip, port))
         with open(self.db, "r") as f:
             for line in f.readlines():
@@ -70,12 +81,13 @@ class SPServer:
         s.close()
 
     def hasTransferPermissions(self, a):
-        return True
-        return a in self.transfSS  # ver melhor isto
+        print("AAAAAAAAAA")
+        ss = f"{a[0]}:{a[1]}"
+        return ss in self.transfSS
 
     def verifiyDomain(self,d):
         r = False
-        for ip,domain in self.domains:
+        for domain in self.domains:
             if d==domain:
                 r=True
                 break
@@ -85,9 +97,7 @@ class SPServer:
     def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        if not port:
-            port = 1234
-        s.bind((socket.gethostname(), port))
+        s.bind((socket.gethostname(), int(port)))
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
         )
@@ -95,11 +105,13 @@ class SPServer:
         # receber queries
         while True:
             msg, a = s.recvfrom(1024)
-
             # processar pedido
-            pdu = PDU(
-                msg.decode("utf-8")
-            )  # se não está completo esperar ou arranjar estratégia melhor
+            try:
+                pdu = PDU(
+                    msg.decode("utf-8")
+                )
+            except:
+                pdu = PDU(error=3)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
@@ -119,6 +131,9 @@ class SPServer:
                 if self.nlinhas == int(pdu.name):
                     self.sendDBLines(a[0],int(a[1]))
                     l.addEntry(time.time(),"ZT",a,"SP")
+            elif(pdu.response==3):
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"ER",a,"Erro a transformar String em PDU")
             # resposta à query
             elif (self.verifiyDomain(pdu.name)): #isto deve estar mal
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -135,6 +150,17 @@ class SPServer:
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
                 l.addEntry(time.time(),"RP",a,pdu)
-
+            else:
+                pdu.response=2
+                pdu.auth = self.cache.getAllTypeEntries("NS")
+                pdu.nauth = len(pdu.auth)
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(time.time(),"RP",a,pdu)
+        l= self.logs["all"]
+        l.addEntry(time.time(),"SP","@","Paragem de SP")
+        
 
 # python3 parseServer.py ../testFiles/configtest.txt

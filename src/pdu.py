@@ -2,7 +2,7 @@ import random
 
 
 class PDU:
-    def __init__(self, udp=None, name=None, typeofvalue=None, flag=None):
+    def __init__(self, udp=None, name=None, typeofvalue=None, flag=None, error=0):
         if udp:
             datagram = udp.split(";")
             header = datagram[0].split(",")
@@ -34,7 +34,7 @@ class PDU:
             self.id = random.randint(1, 65535)
             self.flag = flag
             self.parseFlags()
-            self.response = 0
+            self.response = error
             self.nvalues = 0
             self.nauth = 0
             self.nextra = 0
