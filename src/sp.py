@@ -81,9 +81,9 @@ class SPServer:
         s.close()
 
     def hasTransferPermissions(self, a):
-        print("AAAAAAAAAA")
         ss = f"{a[0]}:{a[1]}"
-        return ss in self.transfSS
+        b = ss in self.transfSS
+        return b
 
     def verifiyDomain(self,d):
         r = False
