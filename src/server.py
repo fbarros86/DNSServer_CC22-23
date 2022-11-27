@@ -28,7 +28,7 @@ def verifyType(s_type):
 
 
 class InitServer:
-    def __init__(self, confFile, port, timeout, mode=0):
+    def __init__(self, confFile, port, timeout, mode=0):# modo debug - 0
         server_type=None
         parameters = []
         # ler ficheiro e dividir linhas
@@ -37,8 +37,8 @@ class InitServer:
                 if not (line[0] == "\n" or line[0] == "#"):
                     words = line.split()
                     parameters.append(words)
-        transfSS = []  # lista para SS que podem pedir informação da bd
-        domains = []  # dd
+        transfSS = []  
+        domains = []  
         logs = {}  # ficheiros de logs para registar a atividade
         for p, t, v in parameters:
             s_type = verifyType(t)
@@ -50,23 +50,23 @@ class InitServer:
                 elif server_type != s_type:
                     raise InvalidConfig("Confliting types of server")
             if t == "DB":
-                db = v
+                db = v # caminho para ficheiro de base de dados
             elif t == "SP":
-                spIP = (v, p)
+                spIP = (v, p) #(domínio do servidor primário, endereço do serrvidor primário(ip:port))
             elif t == "SS":
-                transfSS.append(v)
+                transfSS.append(v) # lista para SS que podem pedir informação da bd
             elif t == "DD":
-                domains.append(p)
+                domains.append(p) # dd
             elif t == "ST":
                 if p != "root":
                     raise InvalidConfig("ST parameter invalid")
-                stList = v
+                stList = v # caminho para o ficheiro com a lista dos STs
             elif t == "LG":
-                logs[p] = Logs(v,mode)
-                logs[p].addEntry(datetime.now(),"EV","@","Ficheiro Logs Criado")
                 if not os.path.exists(v):
                     f = open(v, "w")
                     f.close()
+                logs[p] = Logs(v,mode) # criar objeto Logs com o path v e o modo mode
+                logs[p].addEntry(datetime.now(),"EV","@","Ficheiro Logs Criado")
         if "all" not in logs:
             raise InvalidConfig("Missing log file by default")
         if not server_type:
