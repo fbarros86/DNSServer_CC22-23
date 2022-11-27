@@ -1,6 +1,7 @@
 from cenas import getIPandPort
 import socket
 import time
+from datetime import datetime
 from pdu import PDU
 from cache import Cache, entryOrigin
 from cenas import decodeEmail,addSTsToCache
@@ -15,15 +16,16 @@ class SSServer:
         self.spIP, self.spPort = getIPandPort(spIP[0])
         self.cache = Cache()
         self.domains = domains
+        self.spDomain = spIP[0]
         try:
             addSTsToCache(self.cache,stList)
-        except:
-            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
+        except: 
+            l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
         self.dbv = -1
         self.dbtime = -1
         self.texpire = -1
         self.timeout = timeout
-        l.addEntry(time.time(),"SP","@","Debug")
+        l.addEntry(datetime.now(),"SP","@","Debug")
         self.startUDPSS(port)
 
     def verifyVersion(self, s: socket.socket):
@@ -32,10 +34,10 @@ class SSServer:
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
         s.sendto(str(msg).encode("utf-8"), (self.spIP, int(self.spPort)))
-        l.addEntry(time.time(),"QE",f"{self.spIP}:{self.spPort}",msg)
+        l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",msg)
         msg = s.recv(1024)
         rsp = PDU(udp=msg.decode("utf-8"))
-        l.addEntry(time.time(),"RR",f"{self.spIP}:{self.spPort}",rsp)
+        l.addEntry(datetime.now(),"RR",f"{self.spIP}:{self.spPort}",rsp)
         return int(self.dbv) == int(rsp.name)
 
     def parseDBLine(self, i,msg:str):
@@ -62,21 +64,21 @@ class SSServer:
         return True
 
     def updateDB(self, sUDP: socket.socket,port):
-        msg = PDU(name="nomecompleto", typeofvalue="SSDB")
+        msg = PDU(name=self.spDomain, typeofvalue="SSDB")
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
         sUDP.sendto(str(msg).encode("utf-8"), (self.spIP, int(self.spPort)))
-        l.addEntry(time.time(),"QE",f"{self.spIP}:{self.spPort}",msg)
+        l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",msg)
        
         msg = sUDP.recv(1024)
         rsp = PDU(udp=msg.decode("utf-8"))
-        l.addEntry(time.time(),"RR",f"{self.spIP}:{self.spPort}",rsp)
+        l.addEntry(datetime.now(),"RR",f"{self.spIP}:{self.spPort}",rsp)
         nLinhas = int(rsp.name)
         
         
         sUDP.sendto(msg, (self.spIP, int(self.spPort)))
-        l.addEntry(time.time(),"QE",f"{self.spIP}:{self.spPort}",rsp)
+        l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",rsp)
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((socket.gethostname(), int(port)))
@@ -88,7 +90,7 @@ class SSServer:
             if not self.parseDBLine(i, msg):
                 pass  # se não for por ordem
             # verificar se já passou o tempo definido
-        l.addEntry(time.time(),"ZT",f"{self.spIP}:{self.spPort}","SS")
+        l.addEntry(datetime.now(),"ZT",f"{self.spIP}:{self.spPort}","SS")
         connection.close()
         s.close()
         self.dbv = self.cache.getEntryTypeValue("SOASERIAL")
@@ -113,7 +115,6 @@ class SSServer:
 
         # receber queries
         while True:
-            print(time.time(),float(self.dbtime), float(self.texpire))
             if (
                 self.dbv == -1 or time.time() - float(self.dbtime) > float(self.texpire)
             ):
@@ -131,10 +132,10 @@ class SSServer:
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
-            l.addEntry(time.time(),"QR",a,pdu)
+            l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
             if(pdu.response==3):
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"ER",a,"Erro a transformar String em PDU")
+                l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
             elif (self.verifiyDomain(pdu.name)):
                 # resposta à query
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -150,7 +151,7 @@ class SSServer:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"RP",a,pdu)
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
             else:
                 pdu.response=2
                 pdu.auth = self.cache.getAllTypeEntries("NS")
@@ -159,6 +160,6 @@ class SSServer:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"RP",a,pdu)
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         l= self.logs["all"]
-        l.addEntry(time.time(),"SP","@","Paragem de SP")
+        l.addEntry(datetime.now(),"SP","@","Paragem de SP")

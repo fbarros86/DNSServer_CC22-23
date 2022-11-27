@@ -1,5 +1,6 @@
 import socket
 import time
+from datetime import datetime
 from pdu import PDU
 from cache import Cache, entryOrigin
 from cenas import decodeEmail,addSTsToCache
@@ -11,23 +12,23 @@ class SPServer:
         self.logs = logs
         l:Logs
         l= self.logs["all"]
-        l.addEntry(time.time(),"EV","@","Ficheiro de configuração lido")
+        l.addEntry(datetime.now(),"EV","@","Ficheiro de configuração lido")
         self.cache = Cache()
         self.db = db
         try:
             self.nlinhas = self.readDB()
         except:
-            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
-        l.addEntry(time.time(),"EV","@","Ficheiro de dados lido e armazenado em cache")
+            l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
+        l.addEntry(datetime.now(),"EV","@","Ficheiro de dados lido e armazenado em cache")
         self.transfSS = transfSS
         self.domains = domains
         try:
             addSTsToCache(self.cache,stList)
         except:
-            l.addEntry(time.time(),"FL","@","Erro a ler ficheiro de dados")
-        l.addEntry(time.time(),"EV","@","Ficheiro da lista dos STs lido e armazenado em cache")
+            l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
+        l.addEntry(datetime.now(),"EV","@","Ficheiro da lista dos STs lido e armazenado em cache")
         self.timeout = timeout
-        l.addEntry(time.time(),"SP","@","Debug")
+        l.addEntry(datetime.now(),"SP","@","Debug")
         self.starUDPSP(port)
         
     def readDB(
@@ -115,25 +116,25 @@ class SPServer:
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
-            l.addEntry(time.time(),"QR",a,pdu)
+            l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
             if pdu.tov == "DBV":
                 version = self.cache.getEntryTypeValue("SOASERIAL")
                 pdu.name = str(version)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"RP",a,pdu)
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
             elif pdu.tov == "SSDB":
                 if self.hasTransferPermissions(a):  # verificar name
                     pdu.name = str(self.nlinhas)
                     pdu.tov = "DBL"
                     s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                    l.addEntry(time.time(),"RP",a,pdu)
+                    l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
             elif pdu.tov == "DBL":
                 if self.nlinhas == int(pdu.name):
                     self.sendDBLines(a[0],int(a[1]))
-                    l.addEntry(time.time(),"ZT",a,"SP")
+                    l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
             elif(pdu.response==3):
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"ER",a,"Erro a transformar String em PDU")
+                l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
             # resposta à query
             elif (self.verifiyDomain(pdu.name)): #isto deve estar mal
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -149,7 +150,7 @@ class SPServer:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"RP",a,pdu)
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
             else:
                 pdu.response=2
                 pdu.auth = self.cache.getAllTypeEntries("NS")
@@ -158,9 +159,9 @@ class SPServer:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(time.time(),"RP",a,pdu)
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         l= self.logs["all"]
-        l.addEntry(time.time(),"SP","@","Paragem de SP")
+        l.addEntry(datetime.now(),"SP","@","Paragem de SP")
         
 
 # python3 parseServer.py ../testFiles/configtest.txt

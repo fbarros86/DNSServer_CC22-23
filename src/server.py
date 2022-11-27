@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 import sr, ss, sp
 from logs import Logs
 
@@ -62,7 +63,7 @@ class InitServer:
                 stList = v
             elif t == "LG":
                 logs[p] = Logs(v,mode)
-                logs[p].addEntry(time.time(),"EV","@","Ficheiro Logs Criado")
+                logs[p].addEntry(datetime.now(),"EV","@","Ficheiro Logs Criado")
                 if not os.path.exists(v):
                     f = open(v, "w")
                     f.close()
@@ -78,3 +79,5 @@ class InitServer:
 
 InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
 # ficheiro de configuração, porta de atendimento, timeout
+# python3 server.py ../testFiles/configtest.txt 3000 10
+# python3 server.py ../testFiles/configss.txt 3001 10
