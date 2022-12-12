@@ -30,7 +30,21 @@ class SPServer:
         self.timeout = timeout
         l.addEntry(datetime.now(),"SP","@","Debug")
         self.starUDPSP(port)
-        
+
+    def defaultaux(default:dict, parameter):
+        for key in default.keys():
+            if key in parameter:
+                parameter.replace(key,default[key])
+        return parameter
+
+    def defaultdot(default:dict, parameter):
+        if not '@' in default:
+            return parameter
+        if not parameter[-1] == '.':
+            parameter.join('.')
+            parameter.join(default['@'])
+        return parameter
+
     def readDB(
         self,
     ):
@@ -48,36 +62,22 @@ class SPServer:
         # adicionar à cache o conteúdo da base de dados
         for parameter in parameters:
             l = len(parameter)
-            if(default.__contains__(parameter[0])):
-                p=default[parameter[0]]
-            else:
-                p = parameter[0]
-                if default.__contains__('@') and (not p[-1] == '.'):
-                    p.join(default['@'])
-                
-            if(default.__contains__(parameter[1])):
-                s_type=default[parameter[1]]
-            else:
-                s_type = parameter[1]
             
-            if(default.__contains__(parameter[2])):    
-                value = default[parameter[2]]
-            else:
-                value = parameter[2]
-                if default.__contains__('@') and (not value[-1] == '.'):
-                    value.join(parameter('@'))
+            p=self.defaultaux(default,parameter[0])
+            p=self.defaultdot(default,parameter[0])
+                
+            s_type=self.defaultaux(default,parameter[1])
+            
+             
+            value = self.defaultaux(default,parameter[2])
+            value = self.defaultdot(default,parameter[2])
+
             #ttl = 0
             order = None
             if l > 3:
-                if(default.__contains__(parameter[3])):
-                    ttl = default[parameter[3]]
-                else:
-                    ttl = parameter[3]
+                ttl = self.defaultaux(default,parameter[3])
             if l > 4:
-                if(default.__contains__(parameter[4])):
-                    order = default[parameter[4]]
-                else:
-                    order = parameter[4]
+                order = self.defaultaux(default,parameter[4])
             # descodificar segundo macros
             if s_type == "DEFAULT":
                 default[parameter[0]]=parameter[2]
