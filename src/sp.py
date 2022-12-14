@@ -30,12 +30,27 @@ class SPServer:
         self.timeout = timeout
         l.addEntry(datetime.now(),"SP","@","Debug")
         self.starUDPSP(port)
-        
+
+    def defaultaux(default:dict, parameter):
+        for key in default.keys():
+            if key in parameter:
+                parameter.replace(key,default[key])
+        return parameter
+
+    def defaultdot(default:dict, parameter):
+        if not '@' in default:
+            return parameter
+        if not parameter[-1] == '.':
+            parameter.join('.')
+            parameter.join(default['@'])
+        return parameter
+
     def readDB(
         self,
     ):
         parameters = []
         nlines = 0
+        default={}
         # ler ficheiro e dividir linhas
         with open(self.db, "r") as f:
             for line in f.readlines():
@@ -47,18 +62,25 @@ class SPServer:
         # adicionar à cache o conteúdo da base de dados
         for parameter in parameters:
             l = len(parameter)
-            p = parameter[0]
-            s_type = parameter[1]
-            value = parameter[2]
-            ttl = 0
+            
+            p=self.defaultaux(default,parameter[0])
+            p=self.defaultdot(default,parameter[0])
+                
+            s_type=self.defaultaux(default,parameter[1])
+            
+             
+            value = self.defaultaux(default,parameter[2])
+            value = self.defaultdot(default,parameter[2])
+
+            #ttl = 0
             order = None
             if l > 3:
-                ttl = parameter[3]
+                ttl = self.defaultaux(default,parameter[3])
             if l > 4:
-                order = parameter[4]
+                order = self.defaultaux(default,parameter[4])
             # descodificar segundo macros
             if s_type == "DEFAULT":
-                pass  # não é obrigatório -> para implementar dps - é só substituir
+                default[parameter[0]]=parameter[2]
             else:
                 if s_type == "SOAADMIN":
                     self.cache.addEntry(
