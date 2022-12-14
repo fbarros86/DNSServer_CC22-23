@@ -15,10 +15,10 @@ class SPServer:
         l.addEntry(datetime.now(),"EV","@","Ficheiro de configuração lido")
         self.cache = Cache()
         self.db = db
-        try:
-            self.nlinhas = self.readDB()
-        except:
-            l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
+        #try:
+        self.nlinhas = self.readDB()
+        #except:
+        #    l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
         l.addEntry(datetime.now(),"EV","@","Ficheiro de dados lido e armazenado em cache")
         self.transfSS = transfSS
         self.domains = domains
@@ -29,20 +29,21 @@ class SPServer:
         l.addEntry(datetime.now(),"EV","@","Ficheiro da lista dos STs lido e armazenado em cache")
         self.timeout = timeout
         l.addEntry(datetime.now(),"SP","@","Debug")
+        print(self.cache)
         self.starUDPSP(port)
 
-    def defaultaux(default:dict, parameter):
+    def defaultaux(self,default:dict, parameter):
         for key in default.keys():
             if key in parameter:
                 parameter.replace(key,default[key])
         return parameter
 
-    def defaultdot(default:dict, parameter):
+    def defaultdot(self,default:dict, parameter):
         if not '@' in default:
             return parameter
-        if not parameter[-1] == '.':
-            parameter.join('.')
-            parameter.join(default['@'])
+        if parameter[-1] != '.':
+            parameter+="."
+            parameter+=default['@']
         return parameter
 
     def readDB(
