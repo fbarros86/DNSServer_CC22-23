@@ -97,10 +97,13 @@ class SSServer:
         self.dbtime = time.time()
         self.texpire = self.cache.getEntryTypeValue("SOAEXPIRE")
     
-    def verifiyDomain(self,d):
+    def verifiyDomain(self,d:str):
         r = False
         for domain in self.domains:
             if d==domain:
+                r=True
+                break
+            if d.endswith(domain):
                 r=True
                 break
         return r

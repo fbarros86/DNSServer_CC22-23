@@ -86,10 +86,13 @@ class SPServer:
         b = ss in self.transfSS
         return b
 
-    def verifiyDomain(self,d):
+    def verifiyDomain(self,d:str):
         r = False
         for domain in self.domains:
             if d==domain:
+                r=True
+                break
+            if d.endswith(domain):
                 r=True
                 break
         return r
@@ -97,7 +100,7 @@ class SPServer:
     
     def starUDPSP(self, port=3000):
         # abrir socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #socket udp
         s.bind((socket.gethostname(), int(port)))
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
@@ -136,7 +139,7 @@ class SPServer:
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
                 l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
             # resposta à query
-            elif (self.verifiyDomain(pdu.name)): #isto deve estar mal
+            elif (self.verifiyDomain(pdu.name)):
                 pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
                 pdu.nvalues = len(pdu.rvalues)
                 pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
