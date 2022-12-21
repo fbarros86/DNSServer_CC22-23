@@ -121,7 +121,8 @@ class SPServer:
                 break
         return r
             
-    def handle_request(self,pdu, a, s, l):
+    def handle_request(self,pdu:PDU, a, s:socket, l:Logs):
+        time.sleep(5)
         if pdu.tov == "DBV":
             version = self.cache.getEntryTypeValue("SOASERIAL")
             pdu.name = str(version)
@@ -170,6 +171,9 @@ class SPServer:
         # send response
         s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
         l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+    
+    def timeout(self, t):
+        t.join(timeout=0.1)
 
     def starUDPSP(self, port=3000):
         # abrir socket
@@ -178,10 +182,8 @@ class SPServer:
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
         )
-        s.listen()
         # receber queries
         while True:
-            connection,address=s.accept()
             msg, a = s.recvfrom(1024)
             # processar pedido
             try:
@@ -194,7 +196,9 @@ class SPServer:
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
             l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
-            t = threading.Thread(target=self.handle_request(), args = (pdu,a,s,l))
+            t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
+            #timer = threading.Timer(4.0, self.timeout, args=(t))
+            #timer.start()
             t.start()            
         l= self.logs["all"]
         l.addEntry(datetime.now(),"SP","@","Paragem de SP")
