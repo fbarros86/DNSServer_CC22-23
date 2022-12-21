@@ -1,4 +1,5 @@
 import socket
+import threading
 import time
 from datetime import datetime
 from pdu import PDU
@@ -120,7 +121,56 @@ class SPServer:
                 break
         return r
             
-    
+    def handle_request(self,pdu, a, s, l):
+        if pdu.tov == "DBV":
+            version = self.cache.getEntryTypeValue("SOASERIAL")
+            pdu.name = str(version)
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        elif pdu.tov == "SSDB":
+            if self.hasTransferPermissions(a):  # verificar name
+                pdu.name = str(self.nlinhas)
+                pdu.tov = "DBL"
+                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        elif pdu.tov == "DBL":
+            if self.nlinhas == int(pdu.name):
+                self.sendDBLines(a[0],int(a[1]))
+                l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
+        elif(pdu.response==3):
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
+        # resposta à query
+        elif (self.verifiyDomain(pdu.name)):
+            pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
+            pdu.nvalues = len(pdu.rvalues)
+            pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
+            pdu.nauth = len(pdu.auth)
+            # se tiver alguma coisa na cache
+            if pdu.nvalues == 0 and pdu.nauth > 0:
+                pdu.response = 1
+            for v in pdu.rvalues:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            for v in pdu.auth:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            pdu.nextra = len(pdu.extra)
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        else:
+            pdu.response=2
+            pdu.auth = self.cache.getAllTypeEntries("NS")
+            pdu.nauth = len(pdu.auth)
+            for v in pdu.auth:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            pdu.nextra = len(pdu.extra)
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        # process request here
+        # ...
+        # send response
+        s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+        l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+
     def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #socket udp
@@ -128,9 +178,10 @@ class SPServer:
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
         )
-
+        s.listen()
         # receber queries
         while True:
+            connection,address=s.accept()
             msg, a = s.recvfrom(1024)
             # processar pedido
             try:
@@ -143,49 +194,8 @@ class SPServer:
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
             l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
-            if pdu.tov == "DBV":
-                version = self.cache.getEntryTypeValue("SOASERIAL")
-                pdu.name = str(version)
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
-            elif pdu.tov == "SSDB":
-                if self.hasTransferPermissions(a):  # verificar name
-                    pdu.name = str(self.nlinhas)
-                    pdu.tov = "DBL"
-                    s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                    l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
-            elif pdu.tov == "DBL":
-                if self.nlinhas == int(pdu.name):
-                    self.sendDBLines(a[0],int(a[1]))
-                    l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
-            elif(pdu.response==3):
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
-            # resposta à query
-            elif (self.verifiyDomain(pdu.name)):
-                pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
-                pdu.nvalues = len(pdu.rvalues)
-                pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
-                pdu.nauth = len(pdu.auth)
-                # se tiver alguma coisa na cache
-                if pdu.nvalues == 0 and pdu.nauth > 0:
-                    pdu.response = 1
-                for v in pdu.rvalues:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                for v in pdu.auth:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                pdu.nextra = len(pdu.extra)
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
-            else:
-                pdu.response=2
-                pdu.auth = self.cache.getAllTypeEntries("NS")
-                pdu.nauth = len(pdu.auth)
-                for v in pdu.auth:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                pdu.nextra = len(pdu.extra)
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+            t = threading.Thread(target=self.handle_request(), args = (pdu,a,s,l))
+            t.start()            
         l= self.logs["all"]
         l.addEntry(datetime.now(),"SP","@","Paragem de SP")
         
