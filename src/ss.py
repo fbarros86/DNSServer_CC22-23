@@ -6,6 +6,7 @@ from pdu import PDU
 from cache import Cache, entryOrigin
 from cenas import decodeEmail,addSTsToCache
 from logs import Logs
+import threading
 
 
 class SSServer:
@@ -168,6 +169,10 @@ class SSServer:
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
             l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
+            t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
+            #timer = threading.Timer(4.0, self.timeout, args=(t))
+            #timer.start()
+            t.start()  
 
 
             

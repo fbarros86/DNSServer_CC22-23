@@ -28,6 +28,6 @@ class Client:
 
 
 Client(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-
+# python3 cl.py 192.168.1.76:3001 iven.franz. MX R
 # python3 cl.py 192.168.1.76:3000 iven.franz. MX R
 # python3 cl.py 127.0.1.1:3000 iven.franz. MX R

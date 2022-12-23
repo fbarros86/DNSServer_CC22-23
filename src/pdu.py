@@ -49,7 +49,7 @@ class PDU:
         if self.flagQ: self.flag+="Q+"
         if self.flagR: self.flag+="R+"
         if self.flagA: self.flag+="A+"
-        if self.flag[-1] == "+": self.flag = self.flag[:-1]
+        if self.flag!="": self.flag = self.flag[:-1]
         header = f"{self.id},{self.flag},{self.response},{self.nvalues},{self.nauth},{self.nextra};"
         data = f"{self.name},{self.tov}\n"
         for r in self.rvalues:

@@ -166,18 +166,14 @@ class SPServer:
             pdu.nextra = len(pdu.extra)
             s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
-        # process request here
-        # ...
-        # send response
-        s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-        l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        
     
     def timeout(self, t):
         t.join(timeout=0.1)
 
     def starUDPSP(self, port=3000):
         # abrir socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #socket udp
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((socket.gethostname(), int(port)))
         print(
             f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
