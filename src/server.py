@@ -54,18 +54,18 @@ class InitServer:
             elif t == "SP":
                 spIP = (v, p) #(domínio do servidor primário, endereço do serrvidor primário(ip:port))
             elif t == "SS":
-                transfSS.append(v) # lista para SS que podem pedir informação da bd
+                transfSS.append(v) #lista para SS que podem pedir informação da bd
             elif t == "DD":
                 domains.append(p,v) # dd
             elif t == "ST":
                 if p != "root":
                     raise InvalidConfig("ST parameter invalid")
-                stList = v # caminho para o ficheiro com a lista dos STs
+                stList = v #caminho para o ficheiro com a lista dos STs
             elif t == "LG":
                 if not os.path.exists(v):
                     f = open(v, "w")
                     f.close()
-                logs[p] = Logs(v,mode) # criar objeto Logs com o path v e o modo mode
+                logs[p] = Logs(v,mode) #criar objeto Logs com o path v e o modo mode
                 logs[p].addEntry(datetime.now(),"EV","@","Ficheiro Logs Criado")
         if "all" not in logs:
             raise InvalidConfig("Missing log file by default")

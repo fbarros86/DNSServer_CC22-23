@@ -1,3 +1,4 @@
+import threading
 from enum import Enum
 import time
 
@@ -30,6 +31,7 @@ class CacheEntry:
 
 
 class Cache:
+    lock = threading.Lock()
     def __init__(self):
         self.entries = [CacheEntry(0)]
         self.N = 1
@@ -58,16 +60,17 @@ class Cache:
         return None
 
     def getAllEntries(self, name, type):
-        i = 0
-        entries = []
-        while i != -1:
-            v = self.getEntry(i, name, type)
-            if v:
-                entries.append(self.entries[v])
-                i = v + 1
-            else:
-                i = -1
-        return entries
+        with self.lock:
+            i = 0
+            entries = []
+            while i != -1:
+                v = self.getEntry(i, name, type)
+                if v:
+                    entries.append(self.entries[v])
+                    i = v + 1
+                else:
+                    i = -1
+            return entries
 
     def hasEntry(self, name, type, value, order):
         for entry in self.entries:
@@ -88,32 +91,34 @@ class Cache:
         return None
 
     def getEntryTypeValue(self, type):
-        for entry in self.entries:
-            if entry.status == entryState.VALID:
-                if entry.origin == entryOrigin.OTHERS and (
-                    time.time() - entry.timestamp > entry.ttl
-                ):
-                    entry.status = entryState.FREE
-                    self.freeEntries.append(entry.index)
-                    self.freeEntries.sort()
-                elif entry.type == type:
-                    return entry.value
-        return None
+        with self.lock:
+            for entry in self.entries:
+                if entry.status == entryState.VALID:
+                    if entry.origin == entryOrigin.OTHERS and (
+                        time.time() - entry.timestamp > entry.ttl
+                    ):
+                        entry.status = entryState.FREE
+                        self.freeEntries.append(entry.index)
+                        self.freeEntries.sort()
+                    elif entry.type == type:
+                        return entry.value
+            return None
     
     
     def getAllTypeEntries(self, type):
-        r= []
-        for entry in self.entries:
-            if entry.status == entryState.VALID:
-                if entry.origin == entryOrigin.OTHERS and (
-                    time.time() - entry.timestamp > entry.ttl
-                ):
-                    entry.status = entryState.FREE
-                    self.freeEntries.append(entry.index)
-                    self.freeEntries.sort()
-                elif entry.type == type:
-                    r.append(entry)
-        return r
+        with self.lock:
+            r= []
+            for entry in self.entries:
+                if entry.status == entryState.VALID:
+                    if entry.origin == entryOrigin.OTHERS and (
+                        time.time() - entry.timestamp > entry.ttl
+                    ):
+                        entry.status = entryState.FREE
+                        self.freeEntries.append(entry.index)
+                        self.freeEntries.sort()
+                    elif entry.type == type:
+                        r.append(entry)
+            return r
 
     def duplicateCache(self):
         oldN = self.N
@@ -125,27 +130,14 @@ class Cache:
     def addEntry(
         self, name, type, value, ttl=20, order=None, origin=entryOrigin.OTHERS
     ):
-        if self.validEntries == self.N:
-            self.duplicateCache()
-        if origin != entryOrigin.OTHERS:
-            i = self.freeEntries.pop(0)
-            self.validEntries += 1
-            e = self.entries[i]
-            e.name = name
-            e.type = type
-            e.value = value
-            e.ttl = ttl
-            e.order = None
-            e.origin = origin
-            e.timestamp = time.time()
-            e.index = i
-            e.status = entryState.VALID
-        else:
-            e = self.hasEntry(name, type, value, order)
-            if not e:
-                i = self.freeEntries.pop()
-                e = self.entries[i]
+        with self.lock:
+
+            if self.validEntries == self.N:
+                self.duplicateCache()
+            if origin != entryOrigin.OTHERS:
+                i = self.freeEntries.pop(0)
                 self.validEntries += 1
+                e = self.entries[i]
                 e.name = name
                 e.type = type
                 e.value = value
@@ -155,17 +147,33 @@ class Cache:
                 e.timestamp = time.time()
                 e.index = i
                 e.status = entryState.VALID
-            elif e.origin == entryOrigin.OTHERS:
-                if e.status == entryState.FREE:
-                    self.freeEntries.remove(e.index)
+            else:
+                e = self.hasEntry(name, type, value, order)
+                if not e:
+                    i = self.freeEntries.pop()
+                    e = self.entries[i]
                     self.validEntries += 1
-                e.timestamp = time.time()
-                e.status = entryState.VALID
+                    e.name = name
+                    e.type = type
+                    e.value = value
+                    e.ttl = ttl
+                    e.order = None
+                    e.origin = origin
+                    e.timestamp = time.time()
+                    e.index = i
+                    e.status = entryState.VALID
+                elif e.origin == entryOrigin.OTHERS:
+                    if e.status == entryState.FREE:
+                        self.freeEntries.remove(e.index)
+                        self.validEntries += 1
+                    e.timestamp = time.time()
+                    e.status = entryState.VALID
 
     def setDomainFree(self, domain):
-        for entry in self.entries:
-            if entry.name == domain:
-                entry.status = entryState.FREE
-                self.validEntries -= 1
-                self.freeEntries.append(entry.index)
-        self.freeEntries.sort()
+        with self.lock:
+            for entry in self.entries:
+                if entry.name == domain:
+                    entry.status = entryState.FREE
+                    self.validEntries -= 1
+                    self.freeEntries.append(entry.index)
+            self.freeEntries.sort()

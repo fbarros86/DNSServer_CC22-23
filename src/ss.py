@@ -108,6 +108,38 @@ class SSServer:
                 break
         return r
 
+    def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
+        if(pdu.response==3):
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
+        elif (self.verifiyDomain(pdu.name)):
+            # resposta à query
+            pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
+            pdu.nvalues = len(pdu.rvalues)
+            pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
+            pdu.nauth = len(pdu.auth)
+            # se tiver alguma coisa na cache
+            if pdu.nvalues == 0 and pdu.nauth > 0:
+                pdu.response = 1
+            for v in pdu.rvalues:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            for v in pdu.auth:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            pdu.nextra = len(pdu.extra)
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+        else:
+            pdu.response=2
+            pdu.auth = self.cache.getAllTypeEntries("NS")
+            pdu.nauth = len(pdu.auth)
+            for v in pdu.auth:
+                pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+            pdu.nextra = len(pdu.extra)
+            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+
+        
+
     def startUDPSS(self, port=3001):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -136,33 +168,8 @@ class SSServer:
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
             l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
-            if(pdu.response==3):
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
-            elif (self.verifiyDomain(pdu.name)):
-                # resposta à query
-                pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
-                pdu.nvalues = len(pdu.rvalues)
-                pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
-                pdu.nauth = len(pdu.auth)
-                # se tiver alguma coisa na cache
-                if pdu.nvalues == 0 and pdu.nauth > 0:
-                    pdu.response = 1
-                for v in pdu.rvalues:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                for v in pdu.auth:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                pdu.nextra = len(pdu.extra)
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
-            else:
-                pdu.response=2
-                pdu.auth = self.cache.getAllTypeEntries("NS")
-                pdu.nauth = len(pdu.auth)
-                for v in pdu.auth:
-                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
-                pdu.nextra = len(pdu.extra)
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-                l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
+
+
+            
         l= self.logs["all"]
         l.addEntry(datetime.now(),"SP","@","Paragem de SS")
