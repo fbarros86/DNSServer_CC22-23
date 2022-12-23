@@ -99,7 +99,7 @@ class SSServer:
     
     def verifiyDomain(self,d:str):
         r = False
-        for domain in self.domains:
+        for domain,v in self.domains:
             if d==domain:
                 r=True
                 break
@@ -165,4 +165,4 @@ class SSServer:
                 s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
                 l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         l= self.logs["all"]
-        l.addEntry(datetime.now(),"SP","@","Paragem de SP")
+        l.addEntry(datetime.now(),"SP","@","Paragem de SS")

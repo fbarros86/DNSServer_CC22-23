@@ -33,4 +33,4 @@ def addSTsToCache(c:Cache, STfile):
     with open(STfile, "r") as f:
         for line in f.readlines():
             if not (line[0] == "\n" or line[0] == "#"):
-                c.addEntry(name="ST",type="ST",value=line,origin=entryOrigin.FILE)
+                c.addEntry(name="ST",type="ST",value=line[:-1],origin=entryOrigin.FILE)

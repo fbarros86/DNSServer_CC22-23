@@ -111,7 +111,7 @@ class SPServer:
 
     def verifiyDomain(self,d:str):
         r = False
-        for domain in self.domains:
+        for domain,v in self.domains:
             if d==domain:
                 r=True
                 break
