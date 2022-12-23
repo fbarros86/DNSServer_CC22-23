@@ -56,7 +56,7 @@ class InitServer:
             elif t == "SS":
                 transfSS.append(v) #lista para SS que podem pedir informação da bd
             elif t == "DD":
-                domains.append(p,v) # dd
+                domains.append((p,v)) # dd
             elif t == "ST":
                 if p != "root":
                     raise InvalidConfig("ST parameter invalid")

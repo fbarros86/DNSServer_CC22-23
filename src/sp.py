@@ -122,7 +122,7 @@ class SPServer:
         return r
             
     def handle_request(self,pdu:PDU, a, s:socket, l:Logs):
-        time.sleep(5)
+        #time.sleep(5)
         if pdu.tov == "DBV":
             version = self.cache.getEntryTypeValue("SOASERIAL")
             pdu.name = str(version)
