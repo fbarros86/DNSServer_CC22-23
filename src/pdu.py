@@ -1,5 +1,5 @@
 import random
-
+import bitarray
 
 class PDU:
     def __init__(self, udp=None, name=None, typeofvalue=None, flag=None, error=0):
@@ -74,3 +74,112 @@ class PDU:
                     self.flagR = True
                 elif f == "A":
                     self.flagA = True
+
+    def encode (self):
+        ba= bitarray.bitarray()
+        self.addint(ba,0,16,int(self.id))
+        if self.flagQ == False: 
+            ba.append(0) 
+        elif self.flagQ==True : 
+            ba.append(1)
+        
+        if self.flagR == False : 
+            ba.append(0) 
+        elif self.flagR == True : 
+            ba.append(1)
+        
+        if self.flagA == False : 
+            ba.append(0) 
+        elif self.flagA==True: 
+            ba.append(1)   
+
+        #precisa de 2 bits
+        self.addint(ba,19,2,int(self.response))
+        #precisa de 8 bits
+        self.addint(ba,21, 8,int(self.nvalues))
+        
+        #precisa de 8 bits
+        self.addint(ba,29,8,int(self.nauth))
+        
+        #precisa de 8 bits
+        self.addint(ba,37,8, int(self.nextra))
+
+        ba.frombytes(self.name.encode('utf-8'))
+        comma = ","
+        slashn = "\n"
+        ba.frombytes(comma.encode('utf-8'))
+        ba.frombytes(self.tov.encode('utf-8'))
+        ba.frombytes(comma.encode('utf-8'))
+        for rv in self.rvalues:
+            ba.frombytes(rv.encode('utf-8'))
+            ba.frombytes(slashn.encode('utf-8'))
+        ba.frombytes(comma.encode('utf-8'))
+
+        for au in self.auth:
+            ba.frombytes(au.encode('utf-8'))
+            ba.frombytes(slashn.encode('utf-8'))
+
+        ba.frombytes(comma.encode('utf-8'))
+
+        for ex in self.extra:
+            ba.frombytes(ex.encode('utf-8'))
+            ba.frombytes(slashn.encode('utf-8'))
+        return ba
+
+    def decode (self, ba):
+        self.id= int(ba[:16].to01(),base=2)
+
+        if ba[16]==1:
+            self.flagQ=True
+        else:
+            self.flagQ=False
+        
+        if ba[17]==1 :
+            self.flagR=True
+        else:
+            self.flagR=False
+        
+        if ba[18]==1 :
+            self.flagA=True
+        else:
+            self.flagA=False
+      
+        self.response = int(ba[19:22].to01(), base=2)
+        self.nvalues=int(ba[21:29].to01(),base=2)
+        self.nauth=int(ba[29:37].to01(),base=2)
+        self.nextra=int(ba[37:45].to01(),base=2)
+
+        codedstring = ba[45:]
+        string = codedstring.tobytes().decode('utf-8')
+
+        resto= string.split(",")
+
+        self.name= resto[0]
+        self.tov = resto[1]
+
+        if(self.nvalues > 0 or self.nauth >0 or self.nextra >0):
+            rv=resto[1].split("\n")
+            na=resto[2].split("\n")
+            ex=resto[3].split("\n")
+
+
+
+        self.rvalues = []
+        self.auth = []
+        self.extra = []
+        if(self.nvalues>0):
+            for _ in range(0, self.nvalues):
+                self.rvalues.append(rv[_])
+        if(self.nauth >0):
+            for _ in range(0, self.nauth):
+                self.auth.append(na[_])
+        if(self.nextra>0):
+            for _ in range(0, self.nextra):
+                self.extra.append(ex[_])
+
+    def addint(self, ba, index, bits, number):
+        # Convert the number to a bitarray
+        number_ba = bitarray.bitarray(format(number, 'b').zfill(bits))
+
+        # Insert the number_ba into the ba at the specified index
+        ba[index:index+bits] = number_ba
