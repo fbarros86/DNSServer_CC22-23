@@ -146,6 +146,7 @@ class SPServer:
             pdu.nvalues = len(pdu.rvalues)
             pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
             pdu.nauth = len(pdu.auth)
+            pdu.response = 0
             # se tiver alguma coisa na cache
             if pdu.nvalues == 0 and pdu.nauth > 0:
                 pdu.response = 1

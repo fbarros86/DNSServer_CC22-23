@@ -1,6 +1,8 @@
 from pdu import PDU
+import threading
 
 class Logs:
+    lock = threading.Lock()
     def __init__(self, path=None, mode=0):
         self.path = path
         self.mode = mode
@@ -13,5 +15,6 @@ class Logs:
         s= f"{time} {type} {address} {str(pdu)}\n"
         if (self.mode==0): print(s)
         if (self.path):
-            with open(self.path, "a") as f:
-                f.write(s)
+            with self.lock:
+                with open(self.path, "a") as f:
+                    f.write(s)

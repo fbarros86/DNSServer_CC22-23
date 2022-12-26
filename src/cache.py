@@ -31,12 +31,12 @@ class CacheEntry:
 
 
 class Cache:
-    lock = threading.Lock()
     def __init__(self):
         self.entries = [CacheEntry(0)]
         self.N = 1
         self.validEntries = 0
         self.freeEntries = [0]
+        self.lock = threading.Lock()
 
     def __repr__(self) -> str:
         r = ""
@@ -60,16 +60,20 @@ class Cache:
         return None
 
     def getAllEntries(self, name, type):
+        print("AAAA")
         with self.lock:
+            print("AAAA")
             i = 0
             entries = []
             while i != -1:
                 v = self.getEntry(i, name, type)
-                if v:
+                print(v)
+                if v!=None:
                     entries.append(self.entries[v])
                     i = v + 1
                 else:
                     i = -1
+            print("AAAA")
             return entries
 
     def hasEntry(self, name, type, value, order):

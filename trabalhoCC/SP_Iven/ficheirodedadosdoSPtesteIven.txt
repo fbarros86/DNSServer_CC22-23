@@ -1,6 +1,6 @@
 # DNS database file for domain iven.franz.
 
-@ DEFAULT iven.franz.
+@ DEFAULT .iven.franz.
 
 iven.franz. SOASP ns1.iven.franz. 10
 iven.franz. SOAADMIN dns\.iven.franz. 10
