@@ -1,0 +1,4 @@
+#Ficheiro de Configuração do Servidor de Resolução
+
+all LG ../trabalhoCC/SR_Iven/all.log
+root ST ../trabalhoCC/SR_Iven/listaSTteste.txt

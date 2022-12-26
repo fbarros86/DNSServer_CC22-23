@@ -1,0 +1,8 @@
+#Configuração SS Franz
+.franz. SP 10.0.16.14:3000
+
+.franz. DD 127.0.0.1
+.franz. LG franzSS2.log
+
+all LG allSS2.log
+root ST listaSTtesteSS2.txt

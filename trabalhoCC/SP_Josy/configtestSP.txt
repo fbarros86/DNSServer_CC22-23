@@ -1,0 +1,12 @@
+#Ficheiro de Configuração do Servidor Primário Josy
+
+josy.rakar. DB ficheirodedadosdoSPteste.txt
+
+josy.rakar. SS 10.0.16.13:3000
+josy.rakar. SS 10.0.13.11:3000
+
+josy.rakar. DD 127.0.0.1
+josy.rakar. LG josy-rakar.log
+
+all LG all.log
+root ST listaSTteste.txt

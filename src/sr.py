@@ -16,6 +16,7 @@ class SRServer:
         addSTsToCache(self.cache,stList)
         self.logs = logs
         self.timeout = timeout
+        self.requests = {}
         self.startUDPSR(port)
     
     def handle_request(self,pdu:PDU, a, s:socket, l:Logs):
@@ -23,49 +24,53 @@ class SRServer:
             s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
         # resposta à query
-        else:
+        elif (pdu.flagQ==True):
             if (self.cache.getEntry(0,pdu.name,"ServerIP")):
                 entry = self.cache.getEntry(0,pdu.name,"ServerIP")
             else:
-                entry = self.cache.getEntry(0,"SP","SP")             
+                entry = self.cache.getEntry(0,"ST","ST")
+            entry = self.cache.entries[entry]          
             ip,port = getIPandPort(entry.value)
-            s.sendto(msg, (ip,port)) #no futuro se um dos sps/ipservers não der tentar outro???
-            l.addEntry(datetime.now(),"QE",ip,pdu)
-            response = False
-            while (not response):
-                msg, a = s.recvfrom(1024)
-                try:
-                    pdu = PDU(
-                        msg.decode("utf-8")
-                    )
-                except:
-                    pdu = str(pdu).encode("utf-8")
-                    response=True
-                if pdu.response==1:
-                    nexthop = None
-                    nexthopIP = None
+            pdu.flagQ=False
+            if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
+            self.requests[(pdu.name,pdu.tov)].append((a[0], int(a[1])))
+            s.sendto(str(pdu).encode("utf-8"), (ip,int(port))) #no futuro se um dos sps/ipservers não der tentar outro???
+            l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
+        else:
+            if pdu.response==2:
+                nexthop = None
+                nexthopIP = None
+                pduname = pdu.name
+                while pduname and not nexthop:
                     for auth in pdu.auth:
                         n,_,v = auth.split(",")
-                        if pdu.name.endswith(n):
+                        if n==pduname:
                             nexthop = v
                             break
-                    for ipServer in pdu.extra:
-                        n,_,v = auth.split(",")
-                        if ipServer==nexthop:
-                            nexthopIP = v
-                            break
-                    ip,port = getIPandPort(nexthopIP)
-                    s.sendto(str(pdu).encode("utf-8"),(ip, port))
-                    l.addEntry(datetime.now(),"QE",ip,pdu)  
-                else:
-                    response = True
-                    pdu.flagA = False
+                    while not nexthop and pduname and pduname[0]!=".":
+                        pduname = pduname[1:]
+                for ipServer in pdu.extra:
+                    n,_,v = ipServer.split(",")
+                    if n==nexthop:
+                        nexthopIP = v
+                        break
+                ip,port = getIPandPort(nexthopIP)
+                new_pdu = PDU(name=pdu.name,typeofvalue=pdu.tov)
+                new_pdu.flagA = pdu.flagA
+                new_pdu.flagR = pdu.flagR
+                new_pdu.flagQ = pdu.flagQ
+                s.sendto(str(new_pdu).encode("utf-8"),(ip, int(port)))
+                l.addEntry(datetime.now(),"QE",f"{ip}:{port}",new_pdu)  
+            else:
+                pdu.flagA = False
+                for cli in self.requests[(pdu.name,pdu.tov)]:
+                    s.sendto(str(pdu).encode("utf-8"),cli)
+                    l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)  
                     
-            s.sendto(str(pdu).encode("utf-8"),(a[0], int(a[1])))
-            l.addEntry(datetime.now(),"QE",ip,pdu)  
+            
             
                     
-    def starUDPSR(self, port=3000):
+    def startUDPSR(self, port=3000):
          # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #socket udp
         s.bind((socket.gethostname(), int(port)))
@@ -80,8 +85,9 @@ class SRServer:
                 pdu = PDU(
                     msg.decode("utf-8")
                 )
-            except:
+            except Exception as e:
                 pdu = PDU(error=3)
+                print(e)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]

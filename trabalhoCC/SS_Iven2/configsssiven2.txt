@@ -1,0 +1,8 @@
+#Configuração SS IVEN
+iven.franz. SP 10.0.16.15:3000
+
+iven.franz. DD 127.0.0.1
+iven.franz. LG iven-franzSS2.log
+
+all LG allSS2.log
+root ST listaSTtesteSS2.txt

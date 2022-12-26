@@ -40,6 +40,7 @@ class InitServer:
         transfSS = []  
         domains = []  
         logs = {}  # ficheiros de logs para registar a atividade
+        stList = None
         for p, t, v in parameters:
             s_type = verifyType(t)
             if not s_type:
@@ -79,5 +80,15 @@ class InitServer:
 
 InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
 # ficheiro de configuração, porta de atendimento, timeout
-# python3 server.py ../testFiles/configtest.txt 3000 10
-# python3 server.py ../testFiles/configss.txt 3001 10
+
+
+
+# python3 server.py ../trabalhoCC/SS_Iven1/configsssiven1.txt 3003 10
+# python3 server.py ../trabalhoCC/SP_Iven/configtestSP.txt 3002 10
+# python3 server.py ../trabalhoCC/SS_Franz1/configsssfranz1.txt 3001 10
+# python3 server.py ../trabalhoCC/SR_Iven/configtesteSR.txt 3004 10
+
+
+
+# python3 server.py ../trabalhoCC/SP_Franz/configtestSP.txt 3000 10
+# python3 server.py ../trabalhoCC/ST1/configtesteST1.txt 3005 10

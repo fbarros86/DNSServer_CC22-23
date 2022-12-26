@@ -1,0 +1,5 @@
+#Ficheiro de Configuração do Servidor de Topo 1 
+
+. DB ../trabalhoCC/ST1/ficheirodedadosdoST1teste.txt
+
+all LG ../trabalhoCC/ST1/all.log

@@ -1,0 +1,8 @@
+#Configuração SS IVEN
+iven.franz. SP 192.168.1.76:3002
+
+iven.franz. DD 127.0.0.1
+iven.franz. LG ../trabalhoCC/SS_Iven1/iven-franzSS1.log
+
+all LG ../trabalhoCC/SS_Iven1/allSS1.log
+root ST ../trabalhoCC/SS_Iven1/listaSTtesteSS1.txt

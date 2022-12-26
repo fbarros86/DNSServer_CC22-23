@@ -1,0 +1,5 @@
+#Ficheiro de Configuração do Servidor de Topo 2 
+
+. DB ../testFiles/ficheirodedadosdoST2teste.txt
+
+all LG ../testFiles/all.log

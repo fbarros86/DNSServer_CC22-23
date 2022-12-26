@@ -43,7 +43,6 @@ class SPServer:
         if not '@' in default:
             return parameter
         if parameter[-1] != '.':
-            parameter+="."
             parameter+=default['@']
         return parameter
 
@@ -68,11 +67,11 @@ class SPServer:
             p=self.defaultaux(default,parameter[0])
             p=self.defaultdot(default,parameter[0])
                 
-            s_type=self.defaultaux(default,parameter[1])
+            s_type=parameter[1]
             
-             
             value = self.defaultaux(default,parameter[2])
-            value = self.defaultdot(default,parameter[2])
+            if s_type!="A":
+                value = self.defaultdot(default,parameter[2])
 
             #ttl = 0
             order = None
@@ -116,9 +115,9 @@ class SPServer:
             if d==domain:
                 r=True
                 break
-            if d.endswith(domain):
-                r=True
-                break
+          #  if d.endswith(domain):
+           #     r=True
+            #    break
         return r
             
     def handle_request(self,pdu:PDU, a, s:socket, l:Logs):
@@ -172,6 +171,7 @@ class SPServer:
         t.join(timeout=0.1)
 
     def starUDPSP(self, port=3000):
+        print(self.cache)
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((socket.gethostname(), int(port)))
@@ -200,4 +200,3 @@ class SPServer:
         l.addEntry(datetime.now(),"SP","@","Paragem de SP")
         
 
-# python3 parseServer.py ../testFiles/configtest.txt

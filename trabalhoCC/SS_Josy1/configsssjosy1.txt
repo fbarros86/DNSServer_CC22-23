@@ -1,0 +1,8 @@
+#Configuração SS Josy
+josy.rakar. SP 10.0.17.12:3000
+
+josy.rakar. DD 127.0.0.1
+josy.rakar. LG josy-rakarSS1.log
+
+all LG allSS1.log
+root ST listaSTtesteSS1.txt

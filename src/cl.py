@@ -17,6 +17,7 @@ class Client:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)# socket UDP - protocolo não orientado à conexão,
                                                             # pouco fiável, mas header mais pequeno
         datagram = PDU(name=name, typeofvalue=typeofvalue, flag=flag)
+        datagram.flagQ=True
         s.sendto(str(datagram).encode("utf-8"), (ip, int(port)))
         l.addEntry(datetime.now(),"QE",ipServer,datagram)
 
@@ -30,4 +31,5 @@ class Client:
 Client(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 # python3 cl.py 192.168.1.76:3001 iven.franz. MX R
 # python3 cl.py 192.168.1.76:3000 iven.franz. MX R
+# python3 cl.py 192.168.1.76:3004 iven.franz. MX A
 # python3 cl.py 127.0.1.1:3000 iven.franz. MX R

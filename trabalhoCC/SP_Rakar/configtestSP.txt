@@ -1,0 +1,12 @@
+#Ficheiro de Configuração do Servidor Primário Rakar
+
+.rakar. DB ficheirodedadosdoSPteste.txt
+
+.rakar. SS 10.0.16.12:3000
+.rakar. SS 10.0.13.10:3000
+
+.rakar. DD 127.0.0.1
+.rakar. LG rakar.log
+
+all LG all.log
+root ST listaSTteste.txt

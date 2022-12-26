@@ -34,6 +34,7 @@ class PDU:
             self.id = random.randint(1, 65535)
             self.flag = flag
             self.parseFlags()
+            self.flagQ=True
             self.response = error
             self.nvalues = 0
             self.nauth = 0

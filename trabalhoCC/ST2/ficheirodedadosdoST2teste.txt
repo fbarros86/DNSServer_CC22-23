@@ -1,0 +1,19 @@
+# DNS database file for ST1
+
+. SOASERIAL 0117102022 10
+. SOAREFRESH 10 10
+. SOARETRY 1 10
+. SOAEXPIRE 600 10
+.rakar. NS ns1.rakar. 10
+.rakar. NS ns2.rakar. 10
+.rakar. NS ns3.rakar. 10
+.franz. NS ns1.franz. 10
+.franz. NS ns2.franz. 10
+.franz. NS ns3.franz. 10
+
+ns1.rakar. A 10.0.17.13:3000 10
+ns2.rakar. A 10.0.16.12:3000 10
+ns3.rakar. A 10.0.13.10:3000 10
+ns1.franz. A 10.0.16.14:3000 10
+ns2.franz. A 10.0.13.12:3000 10
+ns3.franz. A 10.0.17.14:3000 10

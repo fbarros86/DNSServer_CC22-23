@@ -1,0 +1,39 @@
+# DNS database file for domain .rakar.
+
+@ DEFAULT .rakar.
+
+.rakar. SOASP ns1.rakar. 10
+.rakar. SOAADMIN dns\.rakar. 10
+.rakar. SOASERIAL 0117102022 10
+.rakar. SOAREFRESH 10 10
+.rakar. SOARETRY 1 10
+.rakar. SOAEXPIRE 600 10
+
+.rakar. NS ns1.rakar. 10
+.rakar. NS ns2.rakar. 10
+.rakar. NS ns3.rakar. 10
+
+josy NS ns1.josy 10
+josy NS ns2.josy 10
+josy NS ns3.josy 10
+
+.rakar. MX mx1.rakar 10 10
+.rakar. MX mx2.rakar 10 20
+
+ns1 A 10.0.17.13:3000 10
+ns2 A 10.0.16.12:3000 10
+ns3 A 10.0.13.10:3000 10
+
+ns1.josy A 10.0.17.12:3000 10
+ns2.josy A 10.0.16.13:3000 10
+ns3.josy A 10.0.13.11:3000 10
+
+mx1 A 10.0.17.16:3000 10
+mx2 A 10.0.17.17:3000 10
+www A 10.0.17.18:3000 10
+
+sp CNAME ns1 10
+ss1 CNAME ns2 10
+ss2 CNAME ns3 100
+mail1 CNAME mx1 10
+mail2 CNAME mx2 10
