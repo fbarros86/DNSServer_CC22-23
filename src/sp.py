@@ -125,21 +125,21 @@ class SPServer:
         if pdu.tov == "DBV":
             version = self.cache.getEntryTypeValue("SOASERIAL")
             pdu.name = str(version)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         elif pdu.tov == "SSDB":
             if self.hasTransferPermissions(a):  # verificar name
                 pdu.name = str(self.nlinhas)
                 pdu.tov = "DBL"
-                s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+                s.sendto(pdu.encode(), (a[0], int(a[1])))
                 l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         elif pdu.tov == "DBL":
             if self.nlinhas == int(pdu.name):
                 self.sendDBLines(a[0],int(a[1]))
                 l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
         elif(pdu.response==3):
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
-            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar em PDU")
         # resposta à query
         elif (self.verifiyDomain(pdu.name)):
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -155,7 +155,7 @@ class SPServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         else:
             pdu.response=2
@@ -164,7 +164,7 @@ class SPServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         
     
@@ -183,12 +183,12 @@ class SPServer:
         while True:
             msg, a = s.recvfrom(1024)
             # processar pedido
-            try:
-                pdu = PDU(
-                    msg.decode("utf-8")
-                )
-            except:
-                pdu = PDU(error=3)
+            pdu = PDU()
+            pdu.decode(msg)
+            #except Exception as e:
+             #   pdu = PDU(error=3)
+              #  print(e)
+                
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]

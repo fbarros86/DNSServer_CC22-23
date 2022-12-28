@@ -1,5 +1,5 @@
 #Configuração SS Franz
-.franz. SP 192.168.1.76:3000
+.franz. SP 127.0.0.1:3000
 
 .franz. DD 127.0.0.1
 .franz. LG ../trabalhoCC/SS_Franz1/franzSS1.log

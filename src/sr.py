@@ -24,10 +24,10 @@ class SRServer:
         self.startUDPSR(port)
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
-        time.sleep(5)
+       # time.sleep(5)
         if(pdu.response==3):
             a,_ = self.requests[pdu.id]
-            s.sendto(str(pdu).encode("utf-8"), a)
+            s.sendto(pdu.encode(), a)
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
         # resposta à query
         elif (pdu.flagQ==True):
@@ -39,7 +39,8 @@ class SRServer:
                 ip,port = getIPandPort(entry.value)
                 pdu.flagQ=False
                 if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
-                s.sendto(str(pdu).encode("utf-8"), (ip,int(port)))
+                print(ip,port)
+                s.sendto(pdu.encode(), (ip,int(port)))
                 l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
                 _,signal = self.requests[pdu.id]
                 signal: threading.Event
@@ -60,13 +61,17 @@ class SRServer:
                 pduname = pdu.name
                 while pduname and nexthop==[]:
                     for auth in pdu.auth:
-                        n,_,v = auth.split(",")
+                        res = auth.split(",")
+                        n=res[0]
+                        v=res[2]
                         if n==pduname:
                             nexthop.append(v)
                     while not nexthop and pduname and pduname[0]!=".":
                         pduname = pduname[1:]
                 for ipServer in pdu.extra:
-                    n,_,v = ipServer.split(",")
+                    res = ipServer.split(",")
+                    n=res[0]
+                    v=res[2]
                     if n in nexthop:
                         nexthopIP.append(v)
                 for next in nexthopIP:
@@ -79,7 +84,7 @@ class SRServer:
                     pdu.nextra=0
                     pdu.nvalues=0
 
-                    s.sendto(str(pdu).encode("utf-8"),(ip, int(port)))
+                    s.sendto(pdu.encode(),(ip, int(port)))
                     l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
                     _,signal = self.requests[pdu.id]
                     signal: threading.Event
@@ -98,7 +103,7 @@ class SRServer:
                 pdu.flagA = False
                 cli,_ = self.requests[pdu.id]
                 
-                s.sendto(str(pdu).encode("utf-8"),cli)
+                s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             
             
@@ -115,13 +120,11 @@ class SRServer:
         while True:
             msg, a = s.recvfrom(1024)
             # processar pedido
-            try:
-                pdu = PDU(
-                    msg.decode("utf-8")
-                )
-            except Exception as e:
-                pdu = PDU(error=3)
-                print(e)
+            pdu = PDU()
+            pdu.decode(msg)
+           # except Exception as e:
+           #     pdu = PDU(error=3)
+           #     print(e)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]

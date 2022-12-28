@@ -27,7 +27,10 @@ class CacheEntry:
         self.timestamp = None
 
     def __repr__(self):
-        return f"{self.name},{self.type},{self.value}"
+        r = f"{self.name},{self.type},{self.value}"
+        if self.ttl: r+=f",{self.ttl}"
+        if self.order: r+=f",{self.order}"
+        return r
 
 
 class Cache:
@@ -60,20 +63,16 @@ class Cache:
         return None
 
     def getAllEntries(self, name, type):
-        print("AAAA")
         with self.lock:
-            print("AAAA")
             i = 0
             entries = []
             while i != -1:
                 v = self.getEntry(i, name, type)
-                print(v)
                 if v!=None:
                     entries.append(self.entries[v])
                     i = v + 1
                 else:
                     i = -1
-            print("AAAA")
             return entries
 
     def hasEntry(self, name, type, value, order):

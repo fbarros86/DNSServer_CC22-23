@@ -2,8 +2,8 @@
 
 .franz. DB ../trabalhoCC/SP_Franz/ficheirodedadosdoSPtesteFranz.txt
 
-.franz. SS 192.168.1.76:3001
-.franz. SS 10.0.17.14:3000
+.franz. SS 127.0.0.1:3001
+.franz. SS 127.0.0.1:3009
 
 .franz. DD 127.0.0.1
 .franz. LG ../trabalhoCC/SP_Franz/franz.log

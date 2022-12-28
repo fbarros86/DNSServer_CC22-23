@@ -34,10 +34,10 @@ class SSServer:
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
-        s.sendto(str(msg).encode("utf-8"), (self.spIP, int(self.spPort)))
+        s.sendto(msg.encode(), (self.spIP, int(self.spPort)))
         l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",msg)
         msg = s.recv(1024)
-        rsp = PDU(udp=msg.decode("utf-8"))
+        rsp = msg.decode()
         l.addEntry(datetime.now(),"RR",f"{self.spIP}:{self.spPort}",rsp)
         return int(self.dbv) == int(rsp.name)
 
@@ -69,11 +69,11 @@ class SSServer:
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
         else: l= self.logs["all"]
-        sUDP.sendto(str(msg).encode("utf-8"), (self.spIP, int(self.spPort)))
+        sUDP.sendto(msg.encode(), (self.spIP, int(self.spPort)))
         l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",msg)
        
         msg = sUDP.recv(1024)
-        rsp = PDU(udp=msg.decode("utf-8"))
+        rsp = msg.decode("utf-8")
         l.addEntry(datetime.now(),"RR",f"{self.spIP}:{self.spPort}",rsp)
         nLinhas = int(rsp.name)
         
@@ -111,7 +111,7 @@ class SSServer:
 
     def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
         if(pdu.response==3):
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
         elif (self.verifiyDomain(pdu.name)):
             # resposta à query
@@ -128,7 +128,7 @@ class SSServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         else:
             pdu.response=2
@@ -137,7 +137,7 @@ class SSServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
-            s.sendto(str(pdu).encode("utf-8"), (a[0], int(a[1])))
+            s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
 
         
@@ -161,9 +161,8 @@ class SSServer:
                     self.dbtime = time.time()
             msg, a = s.recvfrom(1024)
             try:
-                pdu = PDU(
-                    msg.decode("utf-8")
-                )
+                pdu = PDU()
+                pdu.decode(msg)
             except:
                 pdu = PDU(error=3)
             l:Logs

@@ -2,7 +2,7 @@ import random
 import bitarray
 
 class PDU:
-    def __init__(self, udp=None, name=None, typeofvalue=None, flag=None, error=0):
+    def __init__(self, udp=None, name="", typeofvalue="", flag=None, error=0):
         if udp:
             datagram = udp.split(";")
             header = datagram[0].split(",")
@@ -109,24 +109,27 @@ class PDU:
         slashn = "\n"
         ba.frombytes(comma.encode('utf-8'))
         ba.frombytes(self.tov.encode('utf-8'))
-        ba.frombytes(comma.encode('utf-8'))
+        ba.frombytes(slashn.encode('utf-8'))
         for rv in self.rvalues:
-            ba.frombytes(rv.encode('utf-8'))
+            ba.frombytes(str(rv).encode('utf-8'))
             ba.frombytes(slashn.encode('utf-8'))
-        ba.frombytes(comma.encode('utf-8'))
+        #ba.frombytes(comma.encode('utf-8'))
 
         for au in self.auth:
-            ba.frombytes(au.encode('utf-8'))
+            ba.frombytes(str(au).encode('utf-8'))
             ba.frombytes(slashn.encode('utf-8'))
 
-        ba.frombytes(comma.encode('utf-8'))
+        #ba.frombytes(comma.encode('utf-8'))
 
         for ex in self.extra:
-            ba.frombytes(ex.encode('utf-8'))
+            ba.frombytes(str(ex).encode('utf-8'))
             ba.frombytes(slashn.encode('utf-8'))
-        return ba
+        return ba.tobytes()
 
-    def decode (self, ba):
+    def decode (self, b):
+        ba = bitarray.bitarray()
+        ba.frombytes(b)
+        
         self.id= int(ba[:16].to01(),base=2)
 
         if ba[16]==1:
@@ -144,38 +147,34 @@ class PDU:
         else:
             self.flagA=False
       
-        self.response = int(ba[19:22].to01(), base=2)
+        self.response = int(ba[19:21].to01(), base=2)
         self.nvalues=int(ba[21:29].to01(),base=2)
         self.nauth=int(ba[29:37].to01(),base=2)
         self.nextra=int(ba[37:45].to01(),base=2)
-
         codedstring = ba[45:]
         string = codedstring.tobytes().decode('utf-8')
+        
+        resto = string.split("\n")
+        queryInfo = resto[0].split(",")
 
-        resto= string.split(",")
-
-        self.name= resto[0]
-        self.tov = resto[1]
-
-        if(self.nvalues > 0 or self.nauth >0 or self.nextra >0):
-            rv=resto[1].split("\n")
-            na=resto[2].split("\n")
-            ex=resto[3].split("\n")
-
-
-
+        self.name= queryInfo[0]
+        self.tov = queryInfo[1]
+        i=1
         self.rvalues = []
         self.auth = []
         self.extra = []
         if(self.nvalues>0):
             for _ in range(0, self.nvalues):
-                self.rvalues.append(rv[_])
+                self.rvalues.append(resto[i])
+                i+=1
         if(self.nauth >0):
             for _ in range(0, self.nauth):
-                self.auth.append(na[_])
+                self.auth.append(resto[i])
+                i+=1
         if(self.nextra>0):
             for _ in range(0, self.nextra):
-                self.extra.append(ex[_])
+                self.extra.append(resto[i])
+                i+=1
 
     def addint(self, ba, index, bits, number):
         # Convert the number to a bitarray
