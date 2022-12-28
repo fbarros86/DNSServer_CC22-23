@@ -29,7 +29,9 @@ class CacheEntry:
     def __repr__(self):
         r = f"{self.name},{self.type},{self.value}"
         if self.ttl: r+=f",{self.ttl}"
+        else:r+=","
         if self.order: r+=f",{self.order}"
+        else:r+=","
         return r
 
 

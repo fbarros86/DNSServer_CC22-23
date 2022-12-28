@@ -24,37 +24,76 @@ class SRServer:
         self.startUDPSR(port)
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
-       # time.sleep(5)
         if(pdu.response==3):
             a,_ = self.requests[pdu.id]
             s.sendto(pdu.encode(), a)
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
         # resposta à query
         elif (pdu.flagQ==True):
-            if (self.cache.getEntry(0,pdu.name,"ServerIP")):
-                entries = self.cache.getAllEntries(pdu.name,"ServerIP")
+            if (self.cache.getAllEntries(pdu.name,pdu.tov)!=[]):
+                pdu.flagQ = False
+                pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
+                pdu.nvalues = len(pdu.rvalues)
+                pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
+                pdu.nauth = len(pdu.auth)
+                pdu.response = 0
+                for v in pdu.rvalues:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
+                cli,_ = self.requests[pdu.id]
+                s.sendto(pdu.encode(),cli)
+                l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             else:
-                entries = self.cache.getAllEntries("ST","ST")
-            for entry in entries:
-                ip,port = getIPandPort(entry.value)
-                pdu.flagQ=False
-                if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
-                print(ip,port)
-                s.sendto(pdu.encode(), (ip,int(port)))
-                l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                _,signal = self.requests[pdu.id]
-                signal: threading.Event
-                result = signal.wait(timeout=self.timeout)
-                if result:
-                    with self.lock:
-                        for p in q:
-                            if p.id==pdu.id:
-                                new_pdu = p
-                                q.remove(p)
-                                break
-                    self.handle_request(new_pdu,s,l,q)
-                    break
+                if (self.cache.getEntry(0,pdu.name,"ServerIP")):
+                    entries = self.cache.getAllEntries(pdu.name,"ServerIP")
+                else:
+                    entries = self.cache.getAllEntries("ST","ST")
+                for entry in entries:
+                    ip,port = getIPandPort(entry.value)
+                    pdu.flagQ=False
+                    if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
+                    print(ip,port)
+                    s.sendto(pdu.encode(), (ip,int(port)))
+                    l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
+                    _,signal = self.requests[pdu.id]
+                    signal: threading.Event
+                    result = signal.wait(timeout=self.timeout)
+                    if result:
+                        with self.lock:
+                            for p in q:
+                                if p.id==pdu.id:
+                                    new_pdu = p
+                                    q.remove(p)
+                                    break
+                        self.handle_request(new_pdu,s,l,q)
+                        break
         else:
+            print(self.cache)
+            for rvalue in pdu.rvalues:
+                res = rvalue.split(",")
+                print("VALUES ",res)
+                if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
+                elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
+                elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
+                else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
+            for auth in pdu.auth:
+                print(auth)
+                res = auth.split(",")
+                print("AUTH ",res)
+                if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
+                elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
+                elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
+                else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
+            for ipServer in pdu.extra:
+                print("EXTRA ",res)
+                res = ipServer.split(",")
+                if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
+                elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
+                elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
+                else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
+            print(self.cache)
             if pdu.response==2:
                 nexthop = []
                 nexthopIP = []
@@ -102,7 +141,6 @@ class SRServer:
             else:
                 pdu.flagA = False
                 cli,_ = self.requests[pdu.id]
-                
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             
@@ -120,11 +158,12 @@ class SRServer:
         while True:
             msg, a = s.recvfrom(1024)
             # processar pedido
-            pdu = PDU()
-            pdu.decode(msg)
-           # except Exception as e:
-           #     pdu = PDU(error=3)
-           #     print(e)
+            try:
+                pdu = PDU()
+                pdu.decode(msg)
+            except Exception as e:
+                pdu = PDU(error=3)
+                print(e)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]

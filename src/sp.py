@@ -183,11 +183,12 @@ class SPServer:
         while True:
             msg, a = s.recvfrom(1024)
             # processar pedido
-            pdu = PDU()
-            pdu.decode(msg)
-            #except Exception as e:
-             #   pdu = PDU(error=3)
-              #  print(e)
+            try:
+                pdu = PDU()
+                pdu.decode(msg)
+            except Exception as e:
+                pdu = PDU(error=3)
+                print(e)
                 
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]

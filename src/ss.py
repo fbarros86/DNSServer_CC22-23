@@ -171,11 +171,7 @@ class SSServer:
             else: l= self.logs["all"]
             l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
             t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
-            #timer = threading.Timer(4.0, self.timeout, args=(t))
-            #timer.start()
             t.start()  
-
-
-            
+   
         l= self.logs["all"]
         l.addEntry(datetime.now(),"SP","@","Paragem de SS")
