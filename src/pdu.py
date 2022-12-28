@@ -113,13 +113,11 @@ class PDU:
         for rv in self.rvalues:
             ba.frombytes(str(rv).encode('utf-8'))
             ba.frombytes(slashn.encode('utf-8'))
-        #ba.frombytes(comma.encode('utf-8'))
 
         for au in self.auth:
             ba.frombytes(str(au).encode('utf-8'))
             ba.frombytes(slashn.encode('utf-8'))
 
-        #ba.frombytes(comma.encode('utf-8'))
 
         for ex in self.extra:
             ba.frombytes(str(ex).encode('utf-8'))

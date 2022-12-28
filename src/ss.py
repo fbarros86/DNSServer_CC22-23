@@ -73,7 +73,8 @@ class SSServer:
         l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",msg)
        
         msg = sUDP.recv(1024)
-        rsp = msg.decode("utf-8")
+        rsp = PDU()
+        rsp.decode(msg)
         l.addEntry(datetime.now(),"RR",f"{self.spIP}:{self.spPort}",rsp)
         nLinhas = int(rsp.name)
         
