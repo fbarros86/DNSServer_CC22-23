@@ -168,11 +168,7 @@ class Cache:
                     e.index = i
                     e.status = entryState.VALID
                 elif e.origin == entryOrigin.OTHERS:
-                    if e.status == entryState.FREE:
-                        self.freeEntries.remove(e.index)
-                        self.validEntries += 1
                     e.timestamp = time.time()
-                    e.status = entryState.VALID
 
     def setDomainFree(self, domain):
         with self.lock:

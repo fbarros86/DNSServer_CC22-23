@@ -20,19 +20,18 @@ class SRServer:
         self.timeout = int(timeout)
         self.requests = {}
         self.lock = threading.Lock()
-        print(self.cache)
         self.startUDPSR(port)
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
         if(pdu.response==3):
             a,_ = self.requests[pdu.id]
             s.sendto(pdu.encode(), a)
-            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
         elif (pdu.flagQ==True):
-            if (self.cache.getAllEntries(pdu.name,pdu.tov)!=[]):
+            pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
+            if (pdu.rvalues!=[]):
                 pdu.flagQ = False
-                pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
                 pdu.nvalues = len(pdu.rvalues)
                 pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
                 pdu.nauth = len(pdu.auth)
@@ -46,15 +45,13 @@ class SRServer:
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             else:
-                if (self.cache.getEntry(0,pdu.name,"ServerIP")):
-                    entries = self.cache.getAllEntries(pdu.name,"ServerIP")
-                else:
+                entries = self.cache.getAllEntries(pdu.name,"ServerIP")
+                if (entries==[]):
                     entries = self.cache.getAllEntries("ST","ST")
                 for entry in entries:
                     ip,port = getIPandPort(entry.value)
                     pdu.flagQ=False
                     if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
-                    print(ip,port)
                     s.sendto(pdu.encode(), (ip,int(port)))
                     l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
                     _,signal = self.requests[pdu.id]
@@ -70,30 +67,24 @@ class SRServer:
                         self.handle_request(new_pdu,s,l,q)
                         break
         else:
-            print(self.cache)
             for rvalue in pdu.rvalues:
                 res = rvalue.split(",")
-                print("VALUES ",res)
                 if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
                 elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
                 elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
                 else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
             for auth in pdu.auth:
-                print(auth)
                 res = auth.split(",")
-                print("AUTH ",res)
                 if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
                 elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
                 elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
                 else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
             for ipServer in pdu.extra:
-                print("EXTRA ",res)
                 res = ipServer.split(",")
                 if (res[3]=="" and res[4]==""):  self.cache.addEntry(res[0],res[1],res[2])
                 elif (res[4]==""):self.cache.addEntry(res[0],res[1],res[2],int(res[3]))
                 elif (res[3]!=""):self.cache.addEntry(res[0],res[1],res[2],order=res[4])
                 else:self.cache.addEntry(res[0],res[1],res[2],int(res[3]),res[4])
-            print(self.cache)
             if pdu.response==2:
                 nexthop = []
                 nexthopIP = []

@@ -9,7 +9,6 @@ class Logs:
         if path:
             with open(self.path, "w") as f:
                 pass
-        # por locks
 
     def addEntry(self,time,type, address, pdu:PDU):
         s= f"{time} {type} {address} {str(pdu)}\n"

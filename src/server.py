@@ -28,7 +28,7 @@ def verifyType(s_type):
 
 
 class InitServer:
-    def __init__(self, confFile, port, timeout, mode=0):# modo debug - 0
+    def __init__(self, confFile, port, timeout, mode=1):# modo debug/normal - 0/1
         server_type=None
         parameters = []
         # ler ficheiro e dividir linhas
@@ -77,9 +77,9 @@ class InitServer:
         else:
             ss.SSServer(spIP, domains, stList, logs,port, timeout)
 
-
-InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
-# ficheiro de configuração, porta de atendimento, timeout
+if len(sys.argv)>4 : InitServer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
+else: InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
+# ficheiro de configuração, porta de atendimento, timeout, modo
 
 
 # python3 server.py ../trabalhoCC/SS_Franz1/configsssfranz1.txt 3001 10

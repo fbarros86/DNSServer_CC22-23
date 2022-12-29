@@ -30,7 +30,6 @@ class SPServer:
         l.addEntry(datetime.now(),"EV","@","Ficheiro da lista dos STs lido e armazenado em cache")
         self.timeout = timeout
         l.addEntry(datetime.now(),"SP","@","Debug")
-        print(self.cache)
         self.starUDPSP(port)
 
     def defaultaux(self,default:dict, parameter):
@@ -139,7 +138,7 @@ class SPServer:
                 l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
         elif(pdu.response==3):
             s.sendto(pdu.encode(), (a[0], int(a[1])))
-            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar em PDU")
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
         elif (self.verifiyDomain(pdu.name)):
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -172,7 +171,6 @@ class SPServer:
         t.join(timeout=0.1)
 
     def starUDPSP(self, port=3000):
-        print(self.cache)
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((socket.gethostname(), int(port)))

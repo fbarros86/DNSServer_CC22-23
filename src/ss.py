@@ -113,7 +113,7 @@ class SSServer:
     def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
         if(pdu.response==3):
             s.sendto(pdu.encode(), (a[0], int(a[1])))
-            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a transformar String em PDU")
+            l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         elif (self.verifiyDomain(pdu.name)):
             # resposta à query
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
@@ -164,8 +164,9 @@ class SSServer:
             try:
                 pdu = PDU()
                 pdu.decode(msg)
-            except:
+            except Exception as e:
                 pdu = PDU(error=3)
+                print(e)
             l:Logs
             if (pdu.name in self.logs): l= self.logs[pdu.name]
             else: l= self.logs["all"]
