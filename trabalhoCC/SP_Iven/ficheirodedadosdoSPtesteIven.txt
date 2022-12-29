@@ -1,28 +1,29 @@
 # DNS database file for domain iven.franz.
 
 @ DEFAULT .iven.franz.
+TTL DEFAULT 10
 
-iven.franz. SOASP ns1.iven.franz. 10
-iven.franz. SOAADMIN dns\.iven.franz. 10
-iven.franz. SOASERIAL 0117102022 10
-iven.franz. SOAREFRESH 10 10
-iven.franz. SOARETRY 1 10
-iven.franz. SOAEXPIRE 600 10
-iven.franz. NS ns1.iven.franz. 10
-iven.franz. NS ns2.iven.franz. 10
-iven.franz. NS ns3.iven.franz. 10
-iven.franz. MX mx1.iven.franz 10 10
-iven.franz. MX mx2.iven.franz 10 20
+iven.franz. SOASP ns1 TTL
+iven.franz. SOAADMIN dns\.iven.franz. TTL
+iven.franz. SOASERIAL 0117TTL2022 TTL
+iven.franz. SOAREFRESH 10 TTL
+iven.franz. SOARETRY 1 TTL
+iven.franz. SOAEXPIRE 600 TTL
+iven.franz. NS ns1 TTL
+iven.franz. NS ns2 TTL
+iven.franz. NS ns3 TTL
+iven.franz. MX mx1 TTL 10
+iven.franz. MX mx2 TTL 20
 
-ns1 A 127.0.0.1:3002 10
-ns2 A 127.0.0.1:3003 10
-ns3 A 10.0.17.15:3000 10
-mx1 A 10.0.16.21:3000 10
-mx2 A 10.0.16.20:3000 10
-www A 10.0.16.19:3000 10
+ns1 A 127.0.0.1:3002 TTL
+ns2 A 127.0.0.1:3003 TTL
+ns3 A 10.0.17.15:3000 TTL
+mx1 A 10.0.16.21:3000 TTL
+mx2 A 10.0.16.20:3000 TTL
+www A 10.0.16.19:3000 TTL
 
-sp CNAME ns1 10
-ss1 CNAME ns2 10
-ss2 CNAME ns3 100
-mail1 CNAME mx1 10
-mail2 CNAME mx2 10
+sp CNAME ns1 TTL
+ss1 CNAME ns2 TTL
+ss2 CNAME ns3 TTL
+mail1 CNAME mx1 TTL
+mail2 CNAME mx2 TTL

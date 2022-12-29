@@ -17,18 +17,12 @@ class Client:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         datagram = PDU(name=name, typeofvalue=typeofvalue, flag=flag)
         datagram.flagQ=True
-        if (mode):
-            s.sendto(datagram.encode(), (ip, int(port)))
-        else: s.sendto(str(datagram).encode("utf-8"), (ip, int(port)))
+        s.sendto(datagram.encode(), (ip, int(port)))
         l.addEntry(datetime.now(),"QE",ipServer,datagram)
-
         # receber resposta
         msg, a = s.recvfrom(1024)
-        if (mode):
-            rsp = PDU()
-            rsp.decode(msg)
-        else:
-            rsp = PDU(udp=msg.decode("utf-8"))
+        rsp = PDU()
+        rsp.decode(msg)
         l.addEntry(datetime.now(),"RR",f"{a[0]}:{a[1]}",rsp)
 
 

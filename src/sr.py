@@ -66,6 +66,8 @@ class SRServer:
                                     break
                         self.handle_request(new_pdu,s,l,q)
                         break
+                    else:
+                        l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
         else:
             for rvalue in pdu.rvalues:
                 res = rvalue.split(",")
@@ -96,8 +98,9 @@ class SRServer:
                         v=res[2]
                         if n==pduname:
                             nexthop.append(v)
-                    while not nexthop and pduname and pduname[0]!=".":
+                    while nexthop==[] and pduname and pduname[0]!=".":
                         pduname = pduname[1:]
+                    if pduname:pduname = pduname[1:]
                 for ipServer in pdu.extra:
                     res = ipServer.split(",")
                     n=res[0]
@@ -126,8 +129,11 @@ class SRServer:
                                     new_pdu = p
                                     q.remove(p)
                                     break
+                        print(new_pdu)
                         self.handle_request(new_pdu,s,l,q)
                         break
+                    else:
+                        l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
                 
             else:
                 pdu.flagA = False

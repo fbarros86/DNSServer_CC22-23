@@ -32,10 +32,10 @@ class SPServer:
         l.addEntry(datetime.now(),"SP","@","Debug")
         self.starUDPSP(port)
 
-    def defaultaux(self,default:dict, parameter):
+    def defaultaux(self,default:dict, parameter:str):
         for key in default.keys():
             if key in parameter:
-                parameter.replace(key,default[key])
+                parameter = parameter.replace(key,default[key])
         return parameter
 
     def defaultdot(self,default:dict, parameter):
@@ -114,8 +114,8 @@ class SPServer:
             if d==domain:
                 r=True
                 break
-          #  if d.endswith(domain):
-           #     r=True
+            #if d.endswith(domain):
+            #    r=True
             #    break
         return r
             
@@ -166,9 +166,7 @@ class SPServer:
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         
-    
-    def timeout(self, t):
-        t.join(timeout=0.1)
+
 
     def starUDPSP(self, port=3000):
         # abrir socket
