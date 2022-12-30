@@ -49,25 +49,29 @@ class SRServer:
                 entries = self.cache.getAllEntries(pdu.name,"ServerIP")
                 if (entries==[]):
                     entries = self.cache.getAllEntries("ST","ST")
+                done = False
                 for entry in entries:
-                    ip,port = getIPandPort(entry.value)
-                    pdu.flagQ=False
-                    s.sendto(pdu.encode(), (ip,int(port)))
-                    l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                    _,signal = self.requests[pdu.id]
-                    signal: threading.Event
-                    result = signal.wait(timeout=self.timeout)
-                    if result:
-                        with self.lock:
-                            for p in q:
-                                if p.id==pdu.id:
-                                    new_pdu = p
-                                    q.remove(p)
-                                    break
-                        self.handle_request(new_pdu,s,l,q)
-                        break
-                    else:
-                        l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
+                    for _ in range(3):
+                        ip,port = getIPandPort(entry.value)
+                        pdu.flagQ=False
+                        s.sendto(pdu.encode(), (ip,int(port)))
+                        l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
+                        _,signal = self.requests[pdu.id]
+                        signal: threading.Event
+                        result = signal.wait(timeout=self.timeout)
+                        if result:
+                            with self.lock:
+                                for p in q:
+                                    if p.id==pdu.id:
+                                        new_pdu = p
+                                        q.remove(p)
+                                        break
+                            self.handle_request(new_pdu,s,l,q)
+                            done=True
+                            break
+                        else:
+                            l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
+                    if done: break
         else:
             for rvalue in pdu.rvalues:
                 res = rvalue.split(",")
@@ -107,34 +111,37 @@ class SRServer:
                     v=res[2]
                     if n in nexthop:
                         nexthopIP.append(v)
+                done = False
                 for next in nexthopIP:
-                    ip,port = getIPandPort(next)
+                    for _ in range(3):
+                        ip,port = getIPandPort(next)
 
-                    pdu.auth=[]
-                    pdu.extra=[]
-                    pdu.rvalues=[]
-                    pdu.nauth=0
-                    pdu.nextra=0
-                    pdu.nvalues=0
+                        pdu.auth=[]
+                        pdu.extra=[]
+                        pdu.rvalues=[]
+                        pdu.nauth=0
+                        pdu.nextra=0
+                        pdu.nvalues=0
 
-                    s.sendto(pdu.encode(),(ip, int(port)))
-                    l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                    _,signal = self.requests[pdu.id]
-                    signal: threading.Event
-                    result = signal.wait(timeout=self.timeout)
-                    if result:
-                        with self.lock:
-                            for p in q:
-                                if p.id==pdu.id:
-                                    new_pdu = p
-                                    q.remove(p)
-                                    break
-                        print(new_pdu)
-                        self.handle_request(new_pdu,s,l,q)
-                        break
-                    else:
-                        l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
-                
+                        s.sendto(pdu.encode(),(ip, int(port)))
+                        l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
+                        _,signal = self.requests[pdu.id]
+                        signal: threading.Event
+                        result = signal.wait(timeout=self.timeout)
+                        if result:
+                            with self.lock:
+                                for p in q:
+                                    if p.id==pdu.id:
+                                        new_pdu = p
+                                        q.remove(p)
+                                        break
+                            print(new_pdu)
+                            self.handle_request(new_pdu,s,l,q)
+                            done=True
+                            break
+                        else:
+                            l.addEntry(datetime.now(),"TO",f"{ip}:{port}","Tentativa de resposta a query") 
+                    if done: break
             else:
                 pdu.flagA = False
                 cli,_ = self.requests[pdu.id]
@@ -166,7 +173,7 @@ class SRServer:
                 with self.lock:
                     q.append(pdu)
                 _,signal = self.requests[pdu.id]
-                time.sleep(0.001)
+                time.sleep(0.01)
                 signal.set()
                 signal.clear()
             else:
