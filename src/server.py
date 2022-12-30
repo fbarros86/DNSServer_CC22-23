@@ -28,7 +28,7 @@ def verifyType(s_type):
 
 
 class InitServer:
-    def __init__(self, confFile, port, timeout, mode=1):# modo debug/normal - 0/1
+    def __init__(self, confFile, port, timeout, ip, mode=1):# modo debug/normal - 0/1
         server_type=None
         parameters = []
         # ler ficheiro e dividir linhas
@@ -71,14 +71,14 @@ class InitServer:
         if "all" not in logs:
             raise InvalidConfig("Missing log file by default")
         if not server_type:
-            sr.SRServer(domains, stList, logs,port, timeout)
+            sr.SRServer(domains, stList, logs,port, timeout,ip)
         elif server_type == "SP":
-            sp.SPServer(db, transfSS, domains, stList, logs,port, timeout)
+            sp.SPServer(db, transfSS, domains, stList, logs,port, timeout,ip)
         else:
-            ss.SSServer(spIP, domains, stList, logs,port, timeout)
+            ss.SSServer(spIP, domains, stList, logs,port, timeout,ip)
 
-if len(sys.argv)>4 : InitServer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
-else: InitServer(sys.argv[1],sys.argv[2],sys.argv[3])
+if len(sys.argv)>5 : InitServer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])
+else: InitServer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
 # ficheiro de configuração, porta de atendimento, timeout, modo
 
 

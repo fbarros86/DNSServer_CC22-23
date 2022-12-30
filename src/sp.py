@@ -9,8 +9,9 @@ from logs import Logs
 
 
 class SPServer:
-    def __init__(self, db, transfSS, domains, stList, logs,port, timeout):
+    def __init__(self, db, transfSS, domains, stList, logs,port, timeout,ip):
         self.logs = logs
+        self.ip = ip
         l:Logs
         l= self.logs["all"]
         l.addEntry(datetime.now(),"EV","@","Ficheiro de configuração lido")
@@ -174,10 +175,7 @@ class SPServer:
     def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind((socket.gethostname(), int(port)))
-        print(
-            f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
-        )
+        s.bind((self.ip, int(port)))
         # receber queries
         while True:
             msg, a = s.recvfrom(1024)

@@ -10,7 +10,8 @@ import threading
 
 
 class SSServer:
-    def __init__(self, spIP, domains, stList, logs,port, timeout):
+    def __init__(self, spIP, domains, stList, logs,port, timeout,ip):
+        self.ip = ip
         self.logs = logs
         l= self.logs["all"]
         self.spDomain = spIP[1]
@@ -149,11 +150,7 @@ class SSServer:
     def startUDPSS(self, port=3001):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind((socket.gethostname(), int(port)))
-        print(
-            f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}\n"
-        )
-
+        s.bind((self.ip, int(port)))
         # receber queries
         while True:
             if (

@@ -10,7 +10,8 @@ import threading
 
 class SRServer:
     
-    def __init__(self, domains, stList, logs,port, timeout):
+    def __init__(self, domains, stList, logs,port, timeout,ip):
+        self.ip = ip
         self.cache = Cache()
         for domain,ip in domains:
             self.cache.addEntry(name=domain, type="ServerIP", value=ip,entryOrigin=entryOrigin.FILE)
@@ -23,7 +24,7 @@ class SRServer:
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
         if(pdu.response==3):
-            a,_ = self.requests[pdu.id]
+            a,_,_ = self.requests[pdu.id]
             s.sendto(pdu.encode(), a)
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
@@ -40,7 +41,7 @@ class SRServer:
                 for v in pdu.auth:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
-                cli,_ = self.requests[pdu.id]
+                cli,_,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             else:
@@ -50,7 +51,6 @@ class SRServer:
                 for entry in entries:
                     ip,port = getIPandPort(entry.value)
                     pdu.flagQ=False
-                    if ((pdu.name,pdu.tov) not in self.requests): self.requests[(pdu.name,pdu.tov)]=[]
                     s.sendto(pdu.encode(), (ip,int(port)))
                     l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
                     _,signal = self.requests[pdu.id]
@@ -118,7 +118,8 @@ class SRServer:
 
                     s.sendto(pdu.encode(),(ip, int(port)))
                     l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                    _,signal = self.requests[pdu.id]
+                    _,signal,_ = self.requests[pdu.id]
+                    self.requests[pdu.id][2] = False
                     signal: threading.Event
                     result = signal.wait(timeout=self.timeout)
                     if result:
@@ -136,7 +137,7 @@ class SRServer:
                 
             else:
                 pdu.flagA = False
-                cli,_ = self.requests[pdu.id]
+                cli,_,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             
@@ -145,10 +146,7 @@ class SRServer:
     def startUDPSR(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #socket udp
-        s.bind((socket.gethostname(), int(port)))
-        print(
-            f"Listening in {socket.gethostbyname(socket.gethostname())}:{port}"
-        )
+        s.bind((self.ip, int(port)))
         q = list()
         # receber queries
         while True:
@@ -167,13 +165,15 @@ class SRServer:
             if (pdu.id in self.requests):
                 with self.lock:
                     q.append(pdu)
-                _,signal = self.requests[pdu.id]
+                _,signal,flag = self.requests[pdu.id]
+                while(flag):
+                    pass
                 signal.set()
                 signal.clear()
             else:
                 t = threading.Thread(target=self.handle_request, args = (pdu,s,l,q))
                 signal = threading.Event()
-                self.requests[pdu.id] = ((a[0],int(a[1])),signal)
+                self.requests[pdu.id] = ((a[0],int(a[1])),signal,True)
                 t.start()                           
             #timer = threading.Timer(4.0, self.timeout, args=(t))
             #timer.start()
