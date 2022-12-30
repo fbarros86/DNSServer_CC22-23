@@ -6,6 +6,7 @@ from pdu import PDU
 from logs import Logs
 from datetime import datetime
 import threading
+import time
 
 
 class SRServer:
@@ -24,7 +25,7 @@ class SRServer:
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
         if(pdu.response==3):
-            a,_,_ = self.requests[pdu.id]
+            a,_=[pdu.id]
             s.sendto(pdu.encode(), a)
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
@@ -41,7 +42,7 @@ class SRServer:
                 for v in pdu.auth:
                     pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
                 pdu.nextra = len(pdu.extra)
-                cli,_,_ = self.requests[pdu.id]
+                cli,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             else:
@@ -118,8 +119,7 @@ class SRServer:
 
                     s.sendto(pdu.encode(),(ip, int(port)))
                     l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                    _,signal,_ = self.requests[pdu.id]
-                    self.requests[pdu.id][2] = False
+                    _,signal = self.requests[pdu.id]
                     signal: threading.Event
                     result = signal.wait(timeout=self.timeout)
                     if result:
@@ -137,7 +137,7 @@ class SRServer:
                 
             else:
                 pdu.flagA = False
-                cli,_,_ = self.requests[pdu.id]
+                cli,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
                 l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
             
@@ -165,15 +165,14 @@ class SRServer:
             if (pdu.id in self.requests):
                 with self.lock:
                     q.append(pdu)
-                _,signal,flag = self.requests[pdu.id]
-                while(flag):
-                    pass
+                _,signal = self.requests[pdu.id]
+                time.sleep(0.001)
                 signal.set()
                 signal.clear()
             else:
                 t = threading.Thread(target=self.handle_request, args = (pdu,s,l,q))
                 signal = threading.Event()
-                self.requests[pdu.id] = ((a[0],int(a[1])),signal,True)
+                self.requests[pdu.id] = ((a[0],int(a[1])),signal)
                 t.start()                           
             #timer = threading.Timer(4.0, self.timeout, args=(t))
             #timer.start()

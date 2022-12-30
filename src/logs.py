@@ -12,7 +12,7 @@ class Logs:
 
     def addEntry(self,time,type, address, pdu:PDU):
         s= f"{time} {type} {address} {str(pdu)}\n"
-        if (self.mode==0): print(s)
+        if (int(self.mode)==0): print(s)
         if (self.path):
             with self.lock:
                 with open(self.path, "a") as f:
