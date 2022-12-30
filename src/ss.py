@@ -99,22 +99,25 @@ class SSServer:
         self.dbtime = time.time()
         self.texpire = self.cache.getEntryTypeValue("SOAEXPIRE")
     
-    def verifiyDomain(self,d:str):
+    def verifiyDomain(self,d:str,tov):
+        if (tov=="A"):
+            while d and d[0]!=".": d = d[1:]
+            if d:d = d[1:]
         r = False
         for domain,v in self.domains:
             if d==domain:
                 r=True
                 break
-            if d.endswith(domain):
-                r=True
-                break
+            #if d.endswith(domain):
+            #    r=True
+            #    break
         return r
 
     def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
         if(pdu.response==3):
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
-        elif (self.verifiyDomain(pdu.name)):
+        elif (self.verifiyDomain(pdu.name,pdu.tov)):
             # resposta à query
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             pdu.nvalues = len(pdu.rvalues)

@@ -108,7 +108,10 @@ class SPServer:
         b = ss in self.transfSS
         return b
 
-    def verifiyDomain(self,d:str):
+    def verifiyDomain(self,d:str,tov):
+        if (tov=="A"):
+            while d and d[0]!=".": d = d[1:]
+            if d:d = d[1:]
         r = False
         for domain,v in self.domains:
             if d==domain:
@@ -140,7 +143,7 @@ class SPServer:
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
-        elif (self.verifiyDomain(pdu.name)):
+        elif (self.verifiyDomain(pdu.name,pdu.tov)):
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             pdu.nvalues = len(pdu.rvalues)
             pdu.auth = self.cache.getAllEntries(pdu.name, "NS")

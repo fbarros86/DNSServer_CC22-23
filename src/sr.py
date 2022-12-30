@@ -6,7 +6,6 @@ from pdu import PDU
 from logs import Logs
 from datetime import datetime
 import threading
-import time
 
 
 class SRServer:
