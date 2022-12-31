@@ -170,10 +170,10 @@ class Cache:
                 elif e.origin == entryOrigin.OTHERS:
                     e.timestamp = time.time()
 
-    def setDomainFree(self, domain):
+    def setSPEntriesFree(self):
         with self.lock:
             for entry in self.entries:
-                if entry.name == domain:
+                if entry.status==entryState.VALID and entry.origin == entryOrigin.SP:
                     entry.status = entryState.FREE
                     self.validEntries -= 1
                     self.freeEntries.append(entry.index)

@@ -91,18 +91,17 @@ class SPServer:
                     self.cache.addEntry(p, s_type, value, ttl, order, entryOrigin.FILE)
         return nlines
 
-    def sendDBLines(self, ip, port):
+    def sendDBLines(self, s:socket.socket):
         i = 0
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        time.sleep(1) #esperar que abra -> está mal
-        s.connect((ip, port))
+        s.listen()
+        connection, address = s.accept()
         with open(self.db, "r") as f:
             for line in f.readlines():
                 if not (line[0] == "\n" or line[0] == "#"):
                     msg = str(i) + " " + line
-                    s.sendall(msg.encode("utf-8"))
+                    connection.sendall(msg.encode("utf-8"))
                     i += 1
-        s.close()
+        connection.close()
 
     def hasTransferPermissions(self, a):
         ss = f"{a[0]}:{a[1]}"
@@ -123,8 +122,17 @@ class SPServer:
             #    break
         return r
             
-    def handle_request(self,pdu:PDU, a, s:socket, l:Logs):
-        #time.sleep(5)
+    def handle_request(self,msg:bytes, a, s:socket,tcps:socket):
+        try:
+            pdu = PDU()
+            pdu.decode(msg)
+        except Exception as e:
+            pdu = PDU(error=3)
+            print(e)
+        l:Logs
+        if (pdu.name in self.logs): l= self.logs[pdu.name]
+        else: l= self.logs["all"]
+        l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
         if pdu.tov == "DBV":
             version = self.cache.getEntryTypeValue("SOASERIAL")
             pdu.name = str(version)
@@ -138,7 +146,7 @@ class SPServer:
                 l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         elif pdu.tov == "DBL":
             if self.nlinhas == int(pdu.name):
-                self.sendDBLines(a[0],int(a[1]))
+                self.sendDBLines(tcps)
                 l.addEntry(datetime.now(),"ZT",f"{a[0]}:{a[1]}","SP")
         elif(pdu.response==3):
             s.sendto(pdu.encode(), (a[0], int(a[1])))
@@ -175,27 +183,19 @@ class SPServer:
     def starUDPSP(self, port=3000):
         # abrir socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        tcps = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.ip, int(port)))
+        tcps.bind((self.ip, int(port)))
         # receber queries
-        while True:
-            msg, a = s.recvfrom(1024)
-            # processar pedido
-            try:
-                pdu = PDU()
-                pdu.decode(msg)
-            except Exception as e:
-                pdu = PDU(error=3)
-                print(e)
-                
-            l:Logs
-            if (pdu.name in self.logs): l= self.logs[pdu.name]
-            else: l= self.logs["all"]
-            l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
-            t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
-            #timer = threading.Timer(4.0, self.timeout, args=(t))
-            #timer.start()
-            t.start()            
-        l= self.logs["all"]
-        l.addEntry(datetime.now(),"SP","@","Paragem de SP")
+        try:
+            while True:
+                msg, a = s.recvfrom(1024)
+                t = threading.Thread(target=self.handle_request, args = (msg,a,s,tcps))
+                t.start()
+        except Exception as e:  
+            s.close()
+            tcps.close()        
+            l= self.logs["all"]
+            l.addEntry(datetime.now(),"SP","@","Paragem de SP - " + e)
         
 

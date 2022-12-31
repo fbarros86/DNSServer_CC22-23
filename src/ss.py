@@ -7,6 +7,22 @@ from cache import Cache, entryOrigin
 from cenas import decodeEmail,addSTsToCache
 from logs import Logs
 import threading
+from contextlib import contextmanager
+import signal
+
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+
 
 
 class SSServer:
@@ -24,13 +40,16 @@ class SSServer:
         except: 
             l.addEntry(datetime.now(),"FL","@","Erro a ler ficheiro de dados")
         self.dbv = -1
-        self.dbtime = -1
-        self.texpire = -1
+        self.dbtime = -1 # tempo em que obteve a base de dados
+        self.texpire = -1 # tempo para a bd expirar
+        self.retry = 5
+        self.soarefresh = 2
         self.timeout = timeout
         l.addEntry(datetime.now(),"SP","@","Debug")
         self.startUDPSS(port)
 
     def verifyVersion(self, s: socket.socket):
+        if (self.dbv==-1): return False
         msg = (PDU(name="DVB", typeofvalue="DBV"))
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
@@ -66,6 +85,7 @@ class SSServer:
         return True
 
     def updateDB(self, sUDP: socket.socket,port):
+        self.cache.setSPEntriesFree()
         msg = PDU(name=self.spDomain, typeofvalue="SSDB")
         l:Logs
         if (msg.name in self.logs): l= self.logs[msg.name]
@@ -84,21 +104,19 @@ class SSServer:
         l.addEntry(datetime.now(),"QE",f"{self.spIP}:{self.spPort}",rsp)
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((socket.gethostname(), int(port)))
-        s.listen()
-        connection, address = s.accept()
-        line = connection.makefile()
+        s.connect((self.spIP,int(self.spPort)))
+        
+        line = s.makefile()
         for i in range(0, nLinhas):
             msg = line.readline()
-            if not self.parseDBLine(i, msg):
-                pass  # se não for por ordem
-            # verificar se já passou o tempo definido
+            self.parseDBLine(i, msg)
         l.addEntry(datetime.now(),"ZT",f"{self.spIP}:{self.spPort}","SS")
-        connection.close()
         s.close()
         self.dbv = self.cache.getEntryTypeValue("SOASERIAL")
-        self.dbtime = time.time()
         self.texpire = self.cache.getEntryTypeValue("SOAEXPIRE")
+        self.retry = self.cache.getEntryTypeValue("SOARETRY")
+        self.soarefresh = self.cache.getEntryTypeValue("SOAREFRESH")
+        self.dbtime = time.time()
     
     def verifiyDomain(self,d:str,tov):
         if (tov=="A"):
@@ -109,9 +127,6 @@ class SSServer:
             if d==domain:
                 r=True
                 break
-            #if d.endswith(domain):
-            #    r=True
-            #    break
         return r
 
     def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
@@ -152,27 +167,41 @@ class SSServer:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((self.ip, int(port)))
         # receber queries
-        while True:
-            if (
-                self.dbv == -1 or time.time() - float(self.dbtime) > float(self.texpire)
-            ):
-                if self.dbv == -1 or not self.verifyVersion(s):
-                    self.updateDB(s,port)
-                else:
-                    self.dbtime = time.time()
-            msg, a = s.recvfrom(1024)
-            try:
-                pdu = PDU()
-                pdu.decode(msg)
-            except Exception as e:
-                pdu = PDU(error=3)
-                print(e)
-            l:Logs
-            if (pdu.name in self.logs): l= self.logs[pdu.name]
-            else: l= self.logs["all"]
-            l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
-            t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
-            t.start()  
-   
-        l= self.logs["all"]
-        l.addEntry(datetime.now(),"SP","@","Paragem de SS")
+        try:
+            while True:
+                if (
+                    self.dbv == -1 or time.time() - float(self.dbtime) > float(self.texpire)
+                ):
+                    flag=True
+                    while (flag):
+                        flag=False
+                        try:
+                            with time_limit(int(self.soarefresh)):
+                                version = self.verifyVersion(s)
+                            if not version:
+                                with time_limit(int(self.timeout)):
+                                    self.updateDB(s,port)
+                            else:
+                                self.dbtime = time.time()
+                        except Exception as e:
+                            self.logs["all"].addEntry(datetime.now(),"EZ",f"{self.spIP}:{self.spPort}","SS")
+                            time.sleep(int(self.retry))
+                            flag=True
+
+                msg, a = s.recvfrom(1024)
+                try:
+                    pdu = PDU()
+                    pdu.decode(msg)
+                except Exception as e:
+                    pdu = PDU(error=3)
+                    print(e)
+                l:Logs
+                if (pdu.name in self.logs): l= self.logs[pdu.name]
+                else: l= self.logs["all"]
+                l.addEntry(datetime.now(),"QR",f"{a[0]}:{a[1]}",pdu)
+                t = threading.Thread(target=self.handle_request, args = (pdu,a,s,l))
+                t.start()  
+        except Exception as e:
+            s.close()
+            l= self.logs["all"]
+            l.addEntry(datetime.now(),"SP","@","Paragem de SS - " + e)
