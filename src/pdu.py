@@ -2,48 +2,29 @@ import random
 import bitarray
 
 class PDU:
-    def __init__(self, udp=None, name="", typeofvalue="", flag=None, error=0):
-        if udp:
-            datagram = udp.split(";")
-            header = datagram[0].split(",")
-            data = datagram[1].split("\n")
-            self.id = int(header[0])
-            self.flag = header[1]
-            self.parseFlags()
-            self.response = int(header[2])
-            self.nvalues = int(header[3])
-            self.nauth = int(header[4])
-            self.nextra = int(header[5])
-            queryInfo = data[0].split(",")
-            self.name = queryInfo[0]
-            self.tov = queryInfo[1]
-            self.rvalues = []
-            self.auth = []
-            self.extra = []
-            i = 1
-            for _ in range(0, self.nvalues):
-                self.rvalues.append(data[i])
-                i += 1
-            for _ in range(0, self.nauth):
-                self.auth.append(data[i])
-                i += 1
-            for _ in range(0, self.nextra):
-                self.extra.append(data[i])
-                i += 1
-        else:
-            self.id = random.randint(1, 65535)
-            self.flag = flag
-            self.parseFlags()
-            self.flagQ=True
-            self.response = error
-            self.nvalues = 0
-            self.nauth = 0
-            self.nextra = 0
-            self.name = name
-            self.tov = typeofvalue
-            self.rvalues = []
-            self.auth = []
-            self.extra = []
+    def __init__(self, name="", typeofvalue="", flag=None, error=0):
+        self.id = random.randint(1, 65535)
+        self.flag = flag
+        self.parseFlags()
+        self.flagQ=True
+        self.response = error
+        self.nvalues = 0
+        self.nauth = 0
+        self.nextra = 0
+        if (self.tov=="PTR"):
+            words = name.split(".")
+            words.reverse()
+            r=""
+            for word in words:
+                r+=word
+                r+="."
+            r+="in-addr.reverse."
+            self.name=name
+        else: self.name = name
+        self.tov = typeofvalue
+        self.rvalues = []
+        self.auth = []
+        self.extra = []
 
     def __repr__(self):
         self.flag = ""
