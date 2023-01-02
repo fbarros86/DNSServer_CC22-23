@@ -11,7 +11,7 @@ class PDU:
         self.nvalues = 0
         self.nauth = 0
         self.nextra = 0
-        if (self.tov=="PTR"):
+        if (typeofvalue=="PTR"):
             words = name.split(".")
             words.reverse()
             r=""

@@ -109,17 +109,14 @@ class SPServer:
         return b
 
     def verifiyDomain(self,d:str,tov):
-        if (tov=="A"):
-            while d and d[0]!=".": d = d[1:]
-            if d:d = d[1:]
         r = False
         for domain,v in self.domains:
             if d==domain:
                 r=True
                 break
-            #if d.endswith(domain):
-            #    r=True
-            #    break
+            if d.endswith(domain):
+                r=True
+                break
         return r
             
     def handle_request(self,msg:bytes, a, s:socket,tcps:socket):
@@ -166,6 +163,13 @@ class SPServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
+            if (pdu.nvalues == 0 and pdu.nauth == 0):
+                pdu.response=2
+                pdu.auth = self.cache.getAllTypeEntries("NS")
+                pdu.nauth = len(pdu.auth)
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         else:
