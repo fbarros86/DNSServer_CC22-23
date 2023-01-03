@@ -153,6 +153,7 @@ class SPServer:
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         # resposta à query
         elif (self.verifiyDomain(pdu.name,pdu.tov)):
+            pdu.flagA=True
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             pdu.nvalues = len(pdu.rvalues)
             pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
@@ -167,6 +168,7 @@ class SPServer:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
             if (pdu.nvalues == 0 and pdu.nauth == 0):
+                pdu.flagA=False
                 pdu.response=2
                 pdu.auth = self.cache.getAllTypeEntries("NS")
                 pdu.nauth = len(pdu.auth)

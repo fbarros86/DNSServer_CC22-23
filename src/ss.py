@@ -127,6 +127,9 @@ class SSServer:
             if d==domain:
                 r=True
                 break
+            if tov=="PTR" and d.endswith(domain):
+                r=True
+                break
         return r
 
     def handle_request(self,pdu:PDU, a , s:socket, l:Logs):
@@ -134,7 +137,7 @@ class SSServer:
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
         elif (self.verifiyDomain(pdu.name,pdu.tov)):
-            # resposta à query
+            pdu.flagA=True
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             pdu.nvalues = len(pdu.rvalues)
             pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
@@ -148,6 +151,14 @@ class SSServer:
             for v in pdu.auth:
                 pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
             pdu.nextra = len(pdu.extra)
+            if (pdu.nvalues == 0 and pdu.nauth == 0):
+                pdu.flagA=False
+                pdu.response=2
+                pdu.auth = self.cache.getAllTypeEntries("NS")
+                pdu.nauth = len(pdu.auth)
+                for v in pdu.auth:
+                    pdu.extra.extend(self.cache.getAllEntries(v.value, "A"))
+                pdu.nextra = len(pdu.extra)
             s.sendto(pdu.encode(), (a[0], int(a[1])))
             l.addEntry(datetime.now(),"RP",f"{a[0]}:{a[1]}",pdu)
         else:
