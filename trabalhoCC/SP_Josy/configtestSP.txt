@@ -1,6 +1,6 @@
 #Ficheiro de Configuração do Servidor Primário Josy
 
-josy.rakar. DB ficheirodedadosdoSPteste.txt
+josy.rakar. DB ficheirodedadosdoSPtesteJosy.txt
 
 josy.rakar. SS 10.0.16.13:3000
 josy.rakar. SS 10.0.13.11:3000

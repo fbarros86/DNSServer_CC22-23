@@ -1,0 +1,38 @@
+# DNS database file for domain 10.in-addr.reverse
+
+@ DEFAULT .0.10.in-addr.reverse.
+
+14.16 PTR ns1.franz.
+12.13 PTR ns2.franz.
+14.17 PTR ns3.franz.
+15.16 PTR ns1.franz.iven.
+13.13 PTR ns2.franz.iven.
+17.15 PTR ns3.franz.iven.
+21.16 PTR mx1.franz.iven.
+20.16 PTR mx2.franz.iven.
+19.16 PTR www.franz.iven.
+13.17 PTR ns1.rakar.
+12.16 PTR ns2.rakar.
+10.13 PTR ns3.rakar.
+12.17 PTR ns1.rakar.josy.
+13.16 PTR ns2.rakar.josy.
+11.13 PTR ns3.rakar.josy.
+19.17 PTR mx1.rakar.josy.
+20.17 PTR mx2.rakar.josy.
+21.17 PTR www.rakar.josy.
+
+
+0.10.in-addr.reverse. SOASP ns1 10
+0.10.in-addr.reverse. SOAADMIN dns\.10.in-addr.reverse 10
+0.10.in-addr.reverse. SOASERIAL 0117102022 10
+0.10.in-addr.reverse. SOAREFRESH 10 10
+0.10.in-addr.reverse. SOARETRY 1 10
+0.10.in-addr.reverse. SOAEXPIRE 600 10
+
+0.10.in-addr.reverse. NS ns1 10
+0.10.in-addr.reverse. NS ns2 10
+0.10.in-addr.reverse. NS ns3 10
+
+ns1 A 10.0.12.11:3000 10
+ns2 A 10.0.17.10:3000 10
+ns3 A 10.0.16.11:3000 10

@@ -1,8 +1,8 @@
 #Configuração SS Rakar
-.rakar. SP 10.0.17.13:3000
+rakar. SP 10.0.17.13:3000
 
-.rakar. DD 127.0.0.1
-.rakar. LG rakarSS2.log
+rakar. DD 127.0.0.1
+rakar. LG rakarSS2.log
 
 all LG allSS2.log
-root ST listaSTtesteSS2.txt
+root ST listaSTteste.txt

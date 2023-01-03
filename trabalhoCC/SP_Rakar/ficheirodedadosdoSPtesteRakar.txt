@@ -2,23 +2,23 @@
 
 @ DEFAULT .rakar.
 
-.rakar. SOASP ns1.rakar. 10
-.rakar. SOAADMIN dns\.rakar. 10
-.rakar. SOASERIAL 0117102022 10
-.rakar. SOAREFRESH 10 10
-.rakar. SOARETRY 1 10
-.rakar. SOAEXPIRE 600 10
+rakar. SOASP ns1.rakar. 10
+rakar. SOAADMIN dns\.rakar. 10
+rakar. SOASERIAL 0117102022 10
+rakar. SOAREFRESH 10 10
+rakar. SOARETRY 1 10
+rakar. SOAEXPIRE 600 10
 
-.rakar. NS ns1.rakar. 10
-.rakar. NS ns2.rakar. 10
-.rakar. NS ns3.rakar. 10
+rakar. NS ns1.rakar. 10
+rakar. NS ns2.rakar. 10
+rakar. NS ns3.rakar. 10
 
 josy NS ns1.josy 10
 josy NS ns2.josy 10
 josy NS ns3.josy 10
 
-.rakar. MX mx1.rakar 10 10
-.rakar. MX mx2.rakar 10 20
+rakar. MX mx1 10 10
+rakar. MX mx2 10 20
 
 ns1 A 10.0.17.13:3000 10
 ns2 A 10.0.16.12:3000 10

@@ -5,4 +5,4 @@ iven.franz. DD 127.0.0.1
 iven.franz. LG iven-franzSS2.log
 
 all LG allSS2.log
-root ST listaSTtesteSS2.txt
+root ST listaSTteste.txt

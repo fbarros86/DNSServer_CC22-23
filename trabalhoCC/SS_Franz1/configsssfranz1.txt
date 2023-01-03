@@ -1,8 +1,8 @@
 #Configuração SS Franz
-.franz. SP 127.0.0.1:3000
+franz. SP 10.0.16.14:3000
 
-.franz. DD 127.0.0.1
-.franz. LG ../trabalhoCC/SS_Franz1/franzSS1.log
+franz. DD 127.0.0.1
+franz. LG franzSS1.log
 
-all LG ../trabalhoCC/SS_Franz1/allSS1.log
-root ST ../trabalhoCC/SS_Franz1/listaSTtesteSS1.txt
+all LG allSS1.log
+root ST listaSTteste.txt

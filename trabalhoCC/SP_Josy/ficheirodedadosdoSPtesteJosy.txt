@@ -1,6 +1,6 @@
 # DNS database file for domain josy.rakar.
 
-@ DEFAULT josy.rakar.
+@ DEFAULT .josy.rakar.
 
 josy.rakar. SOASP ns1josy.rakar. 10
 josy.rakar. SOAADMIN dns\.josy.rakar. 10

@@ -1,12 +1,12 @@
 #Ficheiro de Configuração do Servidor Primário Iven
 
-iven.franz. DB ../trabalhoCC/SP_Iven/ficheirodedadosdoSPtesteIven.txt
+iven.franz. DB ficheirodedadosdoSPtesteIven.txt
 
-iven.franz. SS 127.0.0.1:3003
+iven.franz. SS 10.0.13.13:3000
 iven.franz. SS 10.0.17.15:3000
 
 iven.franz. DD 127.0.0.1
-iven.franz. LG ../trabalhoCC/SP_Iven/iven-franz.log
+iven.franz. LG iven-franz.log
 
-all LG ../trabalhoCC/SP_Iven/all.log
-root ST ../trabalhoCC/SP_Iven/listaSTteste.txt
+all LG all.log
+root ST listaSTteste.txt

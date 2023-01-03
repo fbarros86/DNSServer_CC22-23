@@ -1,0 +1,12 @@
+#Ficheiro de Configuração do Servidor Primário reverse
+
+reverse. DB ficheirodebasededadosdoreverse.txt
+
+reverse. SS 10.0.17.10:3000
+reverse. SS 10.0.16.11:3000
+
+reverse. DD 127.0.0.1
+reverse. LG reverse.log
+
+all LG all.log
+root ST listaSTteste.txt

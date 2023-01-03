@@ -5,4 +5,4 @@ josy.rakar. DD 127.0.0.1
 josy.rakar. LG josy-rakarSS2.log
 
 all LG allSS2.log
-root ST listaSTtesteSS2.txt
+root ST listaSTteste.txt

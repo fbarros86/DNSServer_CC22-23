@@ -1,0 +1,8 @@
+#Ficheiro de Configuração do Servidor Secundário 10.in-addr.reverse
+
+0.10.in-addr.reverse. SP 10.0.12.11:3000
+
+0.10.in-addr.reverse. DD 127.0.0.1
+
+all LG all.log
+root ST listaSTteste.txt

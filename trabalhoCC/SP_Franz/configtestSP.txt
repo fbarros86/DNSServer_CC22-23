@@ -1,12 +1,13 @@
 #Ficheiro de Configuração do Servidor Primário Franz
 
-.franz. DB ../trabalhoCC/SP_Franz/ficheirodedadosdoSPtesteFranz.txt
+franz. DB ficheirodedadosdoSPtesteFranz.txt
 
-.franz. SS 127.0.0.1:3001
-.franz. SS 127.0.0.1:3009
+franz. SS 10.0.13.12:3000
+franz. SS 10.0.17.14:3000
 
-.franz. DD 127.0.0.1
-.franz. LG ../trabalhoCC/SP_Franz/franz.log
+franz. DD 127.0.0.1
 
-all LG ../trabalhoCC/SP_Franz/all.log
-root ST ../trabalhoCC/SP_Franz/listaSTteste.txt
+franz. LG franz.log
+all LG all.log
+
+root ST listaSTteste.txt
