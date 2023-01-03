@@ -25,14 +25,14 @@ class SRServer:
     
     def handle_request(self,pdu:PDU, s:socket, l:Logs, q:list):
         if(pdu.response==3):
-            a,_=[pdu.id]
+            a,_,_=self.requests[pdu.id]
             s.sendto(pdu.encode(), a)
             l.addEntry(datetime.now(),"ER",f"{a[0]}:{a[1]}","Erro a descodificar PDU")
-        # resposta à query
+        # resposta à  query
         elif (pdu.flagQ==True):
+            pdu.flagQ = False
             pdu.rvalues = self.cache.getAllEntries(pdu.name, pdu.tov)
             if (pdu.rvalues!=[]):
-                pdu.flagQ = False
                 pdu.nvalues = len(pdu.rvalues)
                 pdu.auth = self.cache.getAllEntries(pdu.name, "NS")
                 pdu.nauth = len(pdu.auth)
@@ -44,7 +44,7 @@ class SRServer:
                 pdu.nextra = len(pdu.extra)
                 cli,_,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
-                l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
+                l.addEntry(datetime.now(),"RP",f"{cli[0]}:{cli[1]}",pdu)
             else:
                 entries = self.cache.getAllEntries(pdu.name,"ServerIP")
                 if (entries==[]):
@@ -53,14 +53,14 @@ class SRServer:
                 for entry in entries:
                     for _ in range(3):
                         ip,port = getIPandPort(entry.value)
-                        pdu.flagQ=False
                         s.sendto(pdu.encode(), (ip,int(port)))
                         l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                        _,signal,result = self.requests[pdu.id]
+                        a,signal,result = self.requests[pdu.id]
                         signal: threading.Event
                         if (not result): result = signal.wait(timeout=self.timeout)
                         if result:
                             with self.lock:
+                                self.requests[pdu.id] = (a,signal,False)
                                 for p in q:
                                     if p.id==pdu.id:
                                         new_pdu = p
@@ -125,17 +125,17 @@ class SRServer:
 
                         s.sendto(pdu.encode(),(ip, int(port)))
                         l.addEntry(datetime.now(),"QE",f"{ip}:{port}",pdu)
-                        _,signal,result = self.requests[pdu.id]
+                        a,signal,result = self.requests[pdu.id]
                         signal: threading.Event
                         if not result: result = signal.wait(timeout=self.timeout)
                         if result:
                             with self.lock:
+                                self.requests[pdu.id] = (a,signal,False)
                                 for p in q:
                                     if p.id==pdu.id:
                                         new_pdu = p
                                         q.remove(p)
                                         break
-                            print(new_pdu)
                             self.handle_request(new_pdu,s,l,q)
                             done=True
                             break
@@ -146,7 +146,7 @@ class SRServer:
                 pdu.flagA = False
                 cli,_,_ = self.requests[pdu.id]
                 s.sendto(pdu.encode(),cli)
-                l.addEntry(datetime.now(),"QE",f"{cli[0]}:{cli[1]}",pdu)
+                l.addEntry(datetime.now(),"RP",f"{cli[0]}:{cli[1]}",pdu)
             
             
                     
@@ -173,16 +173,17 @@ class SRServer:
                 if (pdu.id in self.requests):
                     with self.lock:
                         q.append(pdu)
-                    p,signal,flag = self.requests[pdu.id]
-                    self.requests[pdu.id]=(p,signal,flag)
+                        p,signal,flag = self.requests[pdu.id]
+                        self.requests[pdu.id]=(p,signal,True)
                     signal.set()
                     signal.clear()
                 else:
                     t = threading.Thread(target=self.handle_request, args = (pdu,s,l,q))
                     signal = threading.Event()
-                    self.requests[pdu.id] = ((a[0],int(a[1])),signal,False)
+                    with self.lock:
+                        self.requests[pdu.id] = ((a[0],int(a[1])),signal,False)
                     t.start()                           
         except Exception as e:
             s.close()
             l= self.logs["all"]
-            l.addEntry(datetime.now(),"SP","@","Paragem de SR - " + e)      
+            l.addEntry(datetime.now(),"SP","@","Paragem de SR - " + str(e))   
