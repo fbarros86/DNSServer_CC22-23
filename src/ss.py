@@ -204,4 +204,4 @@ class SSServer:
         except Exception as e:
             s.close()
             l= self.logs["all"]
-            l.addEntry(datetime.now(),"SP","@","Paragem de SS - " + e)
+            l.addEntry(datetime.now(),"SP","@","Paragem de SS - " + str(e))

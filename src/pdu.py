@@ -19,7 +19,7 @@ class PDU:
                 r+=word
                 r+="."
             r+="in-addr.reverse."
-            self.name=name
+            self.name=r
         else: self.name = name
         self.tov = typeofvalue
         self.rvalues = []

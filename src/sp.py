@@ -73,7 +73,7 @@ class SPServer:
             if s_type!="A":
                 value = self.defaultdot(default,parameter[2])
 
-            #ttl = 0
+            ttl = 0
             order = None
             if l > 3:
                 ttl = self.defaultaux(default,parameter[3])
@@ -109,12 +109,15 @@ class SPServer:
         return b
 
     def verifiyDomain(self,d:str,tov):
+        if (tov=="A"):
+            while d and d[0]!=".": d = d[1:]
+            if d:d = d[1:]
         r = False
         for domain,v in self.domains:
             if d==domain:
                 r=True
                 break
-            if d.endswith(domain):
+            if tov=="PTR" and d.endswith(domain):
                 r=True
                 break
         return r
@@ -200,6 +203,6 @@ class SPServer:
             s.close()
             tcps.close()        
             l= self.logs["all"]
-            l.addEntry(datetime.now(),"SP","@","Paragem de SP - " + e)
+            l.addEntry(datetime.now(),"SP","@","Paragem de SP - " + str(e))
         
 
